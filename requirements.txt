@@ -1,0 +1,6 @@
+pyqiwip2p
+yoomoney
+aiohttp
+aiogram
+psycopg2
+aioschedule
