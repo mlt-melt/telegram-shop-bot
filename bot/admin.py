@@ -1098,7 +1098,7 @@ async def orderadmincall(call: types.CallbackQuery):
     step = 1
     for a in tovars:
         try:
-            text=f'{text}Сумма: {float(a)}\n'
+            text=f'{text}Сумма: {round(float(a), 2)}\n'
         except:
             text=f'{text}{step}.{a}\n'
         step=step+1
@@ -1114,7 +1114,7 @@ async def ordernocall(call: types.CallbackQuery):
     order_id = call.data.split('_')[1]
     await call.message.delete()
     user_id = db.get_order_userid(int(order_id))
-    db.order_end(int(order_id))
+    db.order_cancel(int(order_id), int(user_id))
     p = db.get_order_price(int(order_id))[-1]
     try:
         db.add_balance(int(user_id), float(p))

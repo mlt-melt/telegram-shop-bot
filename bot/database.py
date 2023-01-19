@@ -1010,6 +1010,18 @@ class DB:
                 self.connection.rollback()
             finally:
                 lock.release()
+    
+    def order_cancel(self, order_id, user_id):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('UPDATE orders SET status=? WHERE id=?', ('cancel', order_id))
+                self.cursor.execute('UPDATE users SET pay_count=pay_count-1 WHERE user_id=?', (user_id,))
+                return
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
 
     def get_users_pay(self):
         with self.connection:

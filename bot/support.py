@@ -28,9 +28,6 @@ async def cancelstatesuppuser(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state=SuppUser.UserId)
 async def suppuseruseridmsg(message: types.Message, state: FSMContext):
-
-    
-
     for admin in admins:
         try:
             await bot.send_message(admin, f'Поступил вопрос от пользователя! Посмотрите его в списках заявок')
