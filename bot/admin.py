@@ -1362,7 +1362,7 @@ async def getusercall(call: types.CallbackQuery):
     btn11 = types.InlineKeyboardButton('Изменить персональный РЕФ%', callback_data=f'changepersref_{user_id}')
     btn10 = types.InlineKeyboardButton('Назад', callback_data=f'usersback_{page}')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await call.message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else "Отсутствует"}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round((db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round((db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
+    await call.message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else "Отсутствует"}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round(float(db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='changestatus_')
@@ -1411,7 +1411,7 @@ async def chjangestatususeridmsg(message: types.Message, state: FSMContext):
     btn11 = types.InlineKeyboardButton('Изменить персональный РЕФ%', callback_data=f'changepersref_{user_id}')
     btn10 = types.InlineKeyboardButton('Назад', callback_data=f'usersback_{page}')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id))}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round((db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round((db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
+    await message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id))}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round(float(db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
     
 @dp.callback_query_handler(text_contains='changestatuss_')
 async def changestatusscall(call: types.CallbackQuery):

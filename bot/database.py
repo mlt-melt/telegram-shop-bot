@@ -1016,7 +1016,9 @@ class DB:
             try:
                 lock.acquire(True)
                 self.cursor.execute('UPDATE orders SET status=? WHERE id=?', ('cancel', order_id))
+                result = self.cursor.fetchone()
                 self.cursor.execute('UPDATE users SET pay_count=pay_count-1 WHERE user_id=?', (user_id,))
+                result = self.cursor.fetchone()
                 return
             except:
                 self.connection.rollback()
