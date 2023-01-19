@@ -824,12 +824,12 @@ class DB:
             finally:
                 lock.release()
 
-    def add_order(self, user_id, tovars, adress, comment):
+    def add_order(self, user_id, tovars, adress, comment, promocode):
         with self.connection:
             try:
                 lock.acquire(True)
                 tovars = pickle.dumps(tovars)
-                self.cursor.execute('INSERT INTO orders (user_id, status, tovars, adress, comment, time_of_creating) VALUES (?, ?, ?, ?, ?, ?)', (user_id, 'wait', tovars, adress, comment, time.time()))
+                self.cursor.execute('INSERT INTO orders (user_id, status, tovars, adress, comment, time_of_creating, promo) VALUES (?, ?, ?, ?, ?, ?, ?)', (user_id, 'wait', tovars, adress, comment, time.time(), promocode))
                 self.cursor.execute('SELECT id FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 1', (user_id,))
                 result = self.cursor.fetchone()
                 return result[0]
@@ -1479,11 +1479,20 @@ class DB:
                 lock.acquire(True)
                 self.cursor.execute('SELECT procent FROM promo WHERE name=? AND user_id=?', (name, user_id))
                 result = self.cursor.fetchone()
-                if result == None:
-                    return None
-                else:
-                    self.cursor.execute('DELETE FROM promo WHERE name=? AND user_id=?', (name, user_id))
-                    return result
+                return result
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
+    
+    def del_promo(self, order_id, user_id):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT promo FROM orders WHERE id=? AND user_id=?', (order_id, user_id))
+                result = self.cursor.fetchone()
+                self.cursor.execute('DELETE FROM promo WHERE name=? AND user_id=?', (result[0], user_id))
+                return
             except:
                 self.connection.rollback()
             finally:

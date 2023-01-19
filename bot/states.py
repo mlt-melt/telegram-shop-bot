@@ -119,6 +119,7 @@ class NewOrder(StatesGroup):
     Adress = State()
     Comment = State()
     Promo = State()
+    Promocode = State()
 
 class OrderEnd(StatesGroup):
     OrderId = State()

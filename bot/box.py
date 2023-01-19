@@ -143,6 +143,7 @@ async def neworderpromomsg(message: types.Message, state: FSMContext):
         procent = check_promo[0]
         async with state.proxy() as data:
             data['Promo'] = procent
+            data['Promocode'] = message.text
         await message.answer(translater(message.from_user.id, 'Промокод на скидку')+f' {procent}% '+translater(message.from_user.id, 'активирован!'))
         procent = int(data['Promo'])
         procent = 100-procent-db.get_procent(message.from_user.id)
@@ -259,7 +260,9 @@ async def paycryptocall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    order_id = db.add_order(call.from_user.id, order, adress, comment)
+    async with state.proxy() as data:
+            promocode = data['Promocode']
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
     mkp = types.InlineKeyboardMarkup(row_width=4)
     for coin in coins:
         mkp.insert(types.InlineKeyboardButton(coin, callback_data=f'crypto_{coin}_{order_id}_{price}'))
@@ -296,6 +299,7 @@ async def cryptocall(call: types.CallbackQuery):
                     await call.message.delete()
                     # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
                     db.pay_order(int(order_id))
+                    db.del_promo(int(order_id), int(call.from_user.id))
                     for admin in admins:
                         try:
                             await bot.send_message(admin, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель')
@@ -335,6 +339,7 @@ async def cryptocheckcall(call: types.CallbackQuery):
             await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
             # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
             db.pay_order(int(order_id))
+            db.del_promo(int(order_id), int(call.from_user.id))
             for admin in admins:
                 try:
                     await bot.send_message(admin, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель')
@@ -399,10 +404,13 @@ async def paybalancecall(call: types.CallbackQuery, state: FSMContext):
         await call.message.delete()
         db.pay_balance(call.from_user.id, price)
         await call.message.answer(translater(call.from_user.id, 'Деньги списаны с баланса. Заказ оплачен, менеджер получил уведомление.'), reply_markup=menu_mkp(call.from_user.id))
-        order_id = db.add_order(call.from_user.id, order, adress, comment)
+        async with state.proxy() as data:
+            promocode = data['Promocode']
+        order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
         db.boxlclear(call.from_user.id)
         # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
         db.pay_order(int(order_id))
+        db.del_promo(int(order_id), int(call.from_user.id))
         for admin in admins:
             try:
                 await bot.send_message(admin, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель')
@@ -451,7 +459,9 @@ async def payyoomoneycall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    order_id = db.add_order(call.from_user.id, order, adress, comment)
+    async with state.proxy() as data:
+            promocode = data['Promocode']
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
     paylink = create_pay(price, call.from_user.id, order_id)
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Оплатить'), url=paylink)
@@ -491,7 +501,9 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    order_id = db.add_order(call.from_user.id, order, adress, comment)
+    async with state.proxy() as data:
+            promocode = data['Promocode']
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
     paylink = get_payment(call.from_user.id, order_id, price)
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Оплатить'), url=paylink)
@@ -514,6 +526,7 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
                     await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
                     # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
                     db.pay_order(int(order_id))
+                    db.del_promo(int(order_id), int(call.from_user.id))
                     for admin in admins:
                         try:
                             await bot.send_message(admin, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель')
@@ -546,6 +559,7 @@ async def checkpayyoomcall(call: types.CallbackQuery):
                 await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
                 # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
                 db.pay_order(int(order_id))
+                db.del_promo(int(order_id), int(call.from_user.id))
                 for admin in admins:
                     try:
                         await bot.send_message(admin, 'Новый заказ. Оплата с юмани. Посмотрите через админ-панель')
@@ -589,6 +603,7 @@ async def checkpayqiwicall(call: types.CallbackQuery):
                 await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
                 # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
                 db.pay_order(int(order_id))
+                db.del_promo(int(order_id), int(call.from_user.id))
                 for admin in admins:
                     try:
                         await bot.send_message(admin, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель')
