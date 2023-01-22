@@ -6,6 +6,7 @@ from russian import russian
 
 
 def translater(user_id, text):
+    user_id = int(user_id)
     lan = db.get_langugage(user_id)
     try:
         if lan == 'ru':
@@ -28,13 +29,13 @@ def translater(user_id, text):
     except:
         return text
 
-def get_faq_admin():
+def get_faq_admin(admin_id):
     faq_list = db.get_all_faq_adm()
     mkp = types.InlineKeyboardMarkup()
     for i in faq_list:
         mkp.add(types.InlineKeyboardButton(i[1], callback_data=f'changefaq_{i[0]}'))
-    mkp.add(types.InlineKeyboardButton('Новый раздел', callback_data='newfaq'))
-    mkp.add(types.InlineKeyboardButton('Вернуться в админ-панель', callback_data='admin'))
+    mkp.add(types.InlineKeyboardButton(translater(admin_id, 'Новый раздел'), callback_data='newfaq'))
+    mkp.add(types.InlineKeyboardButton(translater(admin_id, 'Вернуться в админ-панель'), callback_data='admin'))
     return mkp
 
 
@@ -47,13 +48,13 @@ def get_faq_user(user_id):
     return mkp
 
 
-def get_categories_admin():
+def get_categories_admin(admin_id):
     cat_list = db.get_all_cat_adm()
     mkp = types.InlineKeyboardMarkup()
     for i in cat_list:
         mkp.add(types.InlineKeyboardButton(i[1], callback_data=f'admincat_{i[0]}'))
-    mkp.add(types.InlineKeyboardButton('➕ Добавить категорию', callback_data='addcat'))
-    mkp.add(types.InlineKeyboardButton('🔙 Вернуться в админ-панель', callback_data='admin'))
+    mkp.add(types.InlineKeyboardButton('➕ ' + translater(admin_id, 'Добавить категорию'), callback_data='addcat'))
+    mkp.add(types.InlineKeyboardButton('🔙 ' + translater(admin_id, 'Вернуться в админ-панель'), callback_data='admin'))
     return mkp
 
 def get_categories_user(user_id):
@@ -64,15 +65,15 @@ def get_categories_user(user_id):
     mkp.add(types.InlineKeyboardButton(translater(user_id, 'Вернуться в меню'), callback_data='tomenu'))
     return mkp
 
-def get_subcategories_admin(cat_id):
+def get_subcategories_admin(cat_id, admin_id):
     subcat_list = db.get_subcat_adm(cat_id)
     mkp = types.InlineKeyboardMarkup()
     for i in subcat_list:
         mkp.add(types.InlineKeyboardButton(i[1], callback_data=f'adminsubcat_{i[0]}_{cat_id}'))
-    mkp.add(types.InlineKeyboardButton('➕ Добавить подкатегорию', callback_data=f'addsubcat_{cat_id}'))
-    mkp.add(types.InlineKeyboardButton('📝 Изменить название', callback_data=f'changenamecat_{cat_id}'))
-    mkp.add(types.InlineKeyboardButton('🗑 Удалить категорию', callback_data=f'delcat_{cat_id}'))
-    mkp.add(types.InlineKeyboardButton('🔙 Вернуться', callback_data='products'))
+    mkp.add(types.InlineKeyboardButton('➕ ' + translater(admin_id, 'Добавить подкатегорию'), callback_data=f'addsubcat_{cat_id}'))
+    mkp.add(types.InlineKeyboardButton('📝 ' + translater(admin_id, 'Изменить название'), callback_data=f'changenamecat_{cat_id}'))
+    mkp.add(types.InlineKeyboardButton('🗑 ' + translater(admin_id, 'Удалить категорию'), callback_data=f'delcat_{cat_id}'))
+    mkp.add(types.InlineKeyboardButton('🔙 ' + translater(admin_id, 'Вернуться'), callback_data='products'))
     return mkp
 
 def get_subcategories_user(cat_id, user_id):
@@ -80,34 +81,34 @@ def get_subcategories_user(cat_id, user_id):
     mkp = types.InlineKeyboardMarkup()
     for i in subcat_list:
         mkp.add(types.InlineKeyboardButton(i[1], callback_data=f'usersubcat_{i[0]}'))
-    mkp.add(types.InlineKeyboardButton('🔙 Вернуться', callback_data='toshop'))
+    mkp.add(types.InlineKeyboardButton('🔙 ' + translater(user_id, 'Вернуться'), callback_data='toshop'))
     return mkp
 
 
-def get_goods_admin(subcat_id, cat_id):
+def get_goods_admin(subcat_id, cat_id, admin_id):
     goods_list = db.get_goods(subcat_id)
     mkp = types.InlineKeyboardMarkup()
     for i in goods_list:
         mkp.add(types.InlineKeyboardButton(i[1], callback_data=f'admingood_{i[0]}'))
-    mkp.add(types.InlineKeyboardButton('➕ Добавить товар', callback_data=f'addgood_{subcat_id}_{cat_id}'))
-    mkp.add(types.InlineKeyboardButton('📝 Изменить название', callback_data=f'changenamesubcat_{subcat_id}'))
-    mkp.add(types.InlineKeyboardButton('🗑 Удалить подкатегорию', callback_data=f'delsubcat_{subcat_id}'))
-    mkp.add(types.InlineKeyboardButton('🔙 Вернуться', callback_data=f'admincat_{cat_id}'))
+    mkp.add(types.InlineKeyboardButton('➕ ' + translater(admin_id, 'Добавить товар'), callback_data=f'addgood_{subcat_id}_{cat_id}'))
+    mkp.add(types.InlineKeyboardButton('📝 ' + translater(admin_id, 'Изменить название'), callback_data=f'changenamesubcat_{subcat_id}'))
+    mkp.add(types.InlineKeyboardButton('🗑 ' + translater(admin_id, 'Удалить подкатегорию'), callback_data=f'delsubcat_{subcat_id}'))
+    mkp.add(types.InlineKeyboardButton('🔙 ' + translater(admin_id, 'Вернуться'), callback_data=f'admincat_{cat_id}'))
     return mkp
 
 async def send_admin_good(goodid, user_id):
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Название', callback_data=f'changegoodname_{goodid}')
-    btn2 = types.InlineKeyboardButton('Описание', callback_data=f'changegooddesc_{goodid}')
-    btn3 = types.InlineKeyboardButton('Цену', callback_data=f'changegoodprice_{goodid}')
-    btn4 = types.InlineKeyboardButton('🗑 Удалить', callback_data=f'delgood_{goodid}')
-    btn5 = types.InlineKeyboardButton('Отменить', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(user_id, 'Название'), callback_data=f'changegoodname_{goodid}')
+    btn2 = types.InlineKeyboardButton(translater(user_id, 'Описание'), callback_data=f'changegooddesc_{goodid}')
+    btn3 = types.InlineKeyboardButton(translater(user_id, 'Цену'), callback_data=f'changegoodprice_{goodid}')
+    btn4 = types.InlineKeyboardButton('🗑 ' + translater(user_id, 'Удалить'), callback_data=f'delgood_{goodid}')
+    btn5 = types.InlineKeyboardButton(translater(user_id, 'Отменить'), callback_data='admin')
     mkp.add(btn1).add(btn2, btn3).add(btn4).add(btn5)
     if good_info[3] == 'None':
-        await bot.send_message(user_id, f'Название товара: <code>{good_info[0]}</code>\nОписание товара: <code>{good_info[1]}</code>\nЦена: <code>{good_info[2]}</code>\n\nВыберите, что вы хотите изменить', reply_markup=mkp)
+        await bot.send_message(user_id, (translater(user_id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(user_id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(user_id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(user_id, 'Выберите, что вы хотите изменить')), reply_markup=mkp)
     else:
-        await bot.send_photo(user_id, open(f'images/{good_info[3]}', 'rb'), caption=f'Название товара: <code>{good_info[0]}</code>\nОписание товара: <code>{good_info[1]}</code>\nЦена: <code>{good_info[2]}</code>\n\nВыберите, что вы хотите изменить', reply_markup=mkp)
+        await bot.send_photo(user_id, open(f'images/{good_info[3]}', 'rb'), caption=(translater(user_id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(user_id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(user_id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(user_id, 'Выберите, что вы хотите изменить')), reply_markup=mkp)
 
 
 async def send_good(step, subcatid, user_id):

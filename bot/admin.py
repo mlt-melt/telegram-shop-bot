@@ -1,7 +1,7 @@
 from config import dp, admins, db, bot
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from markups import admin_mkp, cancel_adm_mkp, all_users_mkp, menu_mkp, menu_mkp_admin, deliveriesadm_mkp, withdraws_mkp, botsettings_mkp, lan_settingmkp
+from markups import admin_mkp, cancel_mkp, all_users_mkp, menu_mkp, menu_mkp_admin, deliveriesadm_mkp, withdraws_mkp, botsettings_mkp, lan_settingmkp
 from functions import get_faq_admin, get_categories_admin, get_subcategories_admin, get_goods_admin, send_admin_good, translater
 from states import AddSupport, ChangeRef2, NewFaq, FaqName, FaqText, AddCat, AddSubcat, ChangeNamecat, ChangeNamesubcat, AddGood, ChangeNameGood, ChangeDescGood, ChangePriceGood, ChangeRef, OrderEnd, Rassilka, DeliveryAdd, DeliveryChangeName, DeliveryChangeCost, ChangeBalance, GivePromo, GiveSkidka, SendMsg, ChangeStatus, ChangeRules, ChangeToken, ChangeReviewPay, ChageNicknameAdm, AddCatEng, AddCatRus, ChangeNamecatEng, ChangeNamecatRus, AddSubcatEng, AddSubcatRus, ChangeNamesubcatEng, ChangeNamesubcatRus, ChangeNameGoodEng, ChangeNameGoodRus, ChangeDescGoodEng, ChangeDescGoodRus, RassilkaAll
 import pickle
@@ -15,18 +15,24 @@ def get_courses():
     return returns
 
 @dp.message_handler(text='Режим покупателя')
+@dp.message_handler(text='Buyer mode')
 async def pokupmsg(message: types.Message):
-    await message.answer('Вы перешли в режим покупателя', reply_markup=menu_mkp_admin())
+    await message.answer(translater(message.from_user.id, 'Вы перешли в режим покупателя'), reply_markup=menu_mkp_admin(message.from_user.id))
 
 
 @dp.message_handler(commands='admin')
 @dp.message_handler(text='Админ-панель')
+@dp.message_handler(text='Admin panel')
 @dp.message_handler(text='Назад в админку')
+@dp.message_handler(text='Back to admin panel')
+@dp.message_handler(text='Go back to the admin panel')
 @dp.message_handler(text='Вернуться в админ панель')
+@dp.message_handler(text='Вернуться в админ-панель')
+@dp.message_handler(text='Return to admin panel')
 async def adminCmd(message: types.Message):
     if message.from_user.id in admins:
         db.remove_old_orders()
-        await message.answer('Вы вошли в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Вы перешли в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
 
 
 @dp.callback_query_handler(text='admin')
@@ -35,7 +41,7 @@ async def adminCall(call: types.CallbackQuery):
         await call.message.delete()
     except:
         pass
-    await call.message.answer('Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 @dp.callback_query_handler(text='cancel',  state=AddSupport.UserId)
 async def adminCallFromAddingSupport(call: types.CallbackQuery, state: FSMContext):
@@ -47,17 +53,18 @@ async def adminCallFromAddingSupport(call: types.CallbackQuery, state: FSMContex
         await state.finish()
     except:
         pass
-    await call.message.answer('Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.callback_query_handler(text='cancel', state=NewFaq.Name)
 @dp.callback_query_handler(text='cancel', state=NewFaq.EngName)
 @dp.callback_query_handler(text='cancel', state=NewFaq.Text)
 @dp.callback_query_handler(text='cancel', state=NewFaq.EngText)
+@dp.callback_query_handler(text='cancel', state=AddSupport.UserId)
 @dp.callback_query_handler(text='faqset')
 async def faqSetCall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Вы вошли панель редактирования F.A.Q.', reply_markup=get_faq_admin())
+    await call.message.answer(translater(call.from_user.id, 'Вы вошли панель редактирования F.A.Q.'), reply_markup=get_faq_admin(call.from_user.id))
     try:
         await state.finish()
     except:
@@ -65,25 +72,26 @@ async def faqSetCall(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(text='Настройка F.A.Q')
+@dp.message_handler(text='Setting F.A.Q')
 async def faqSetMsg(message: types.Message):
-    await message.answer('Вы вошли панель редактирования F.A.Q.', reply_markup=get_faq_admin())
+    await message.answer(translater(message.from_user.id, 'Вы вошли панель редактирования F.A.Q.'), reply_markup=get_faq_admin(message.from_user.id))
 
 
 
 @dp.callback_query_handler(text='newfaq')
 async def newfaqcall(call: types.CallbackQuery):
     await call.message.delete_reply_markup()
-    await call.message.answer('Введите название раздела', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите название раздела'), reply_markup=cancel_mkp(call.from_user.id))
     await NewFaq.Name.set()
 
 
 @dp.message_handler(state=NewFaq.Name)
 async def newfaqnamemsg(message: types.Message, state: FSMContext):
-    await message.answer(f'Хорошо, название будет: <code>{message.text}</code>')
+    await message.answer(translater(message.from_user.id, 'Хорошо, название будет:') + f' <code>{message.text}</code>')
     async with state.proxy() as data:
         data['Name'] = message.text
-    # await message.answer('Введите текст к разделу:', reply_markup=cancel_adm_mkp())
-    await message.answer('Введите название на английском', reply_markup=cancel_adm_mkp())
+    # await message.answer('Введите текст к разделу:', reply_markup=cancel_mkp(message.from_user.id))
+    await message.answer(translater(message.from_user.id, 'Введите название на английском'), reply_markup=cancel_mkp(message.from_user.id))
     await NewFaq.next()
 
 
@@ -91,7 +99,7 @@ async def newfaqnamemsg(message: types.Message, state: FSMContext):
 async def newfaqengnamemsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['EngName'] = message.text
-    await message.answer('Введите текст к разделу:', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите текст к разделу:'), reply_markup=cancel_mkp(message.from_user.id))
     await NewFaq.next()
 
 
@@ -99,7 +107,7 @@ async def newfaqengnamemsg(message: types.Message, state: FSMContext):
 async def newfaqtextmsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['Text'] = message.text
-    await message.answer('Введите текст на английском:', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите текст на английском:'), reply_markup=cancel_mkp(message.from_user.id))
     await NewFaq.next()
 
 
@@ -108,10 +116,10 @@ async def newfaqengtextmsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['EngText'] = message.text
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Пропустить', callback_data='skip')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='skip')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
-    await message.answer('Отправьте фото или нажмите "Пропустить"', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Отправьте фото или нажмите "Пропустить"'), reply_markup=mkp)
     await NewFaq.next()
 
 
@@ -121,7 +129,7 @@ async def skipnewfawphotocall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         pass
     db.add_faq(data['Name'], data['EngName'], data['Text'], data['EngText'], 'None')
-    await call.message.answer('Успешно добавлено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Успешно добавлено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 
@@ -133,7 +141,7 @@ async def newfaqphotoctphoto(message: types.message, state: FSMContext):
     async with state.proxy() as data:
         data['Photo'] = filename
     db.add_faq(data['Name'], data['EngName'], data['Text'], data['EngText'], filename)
-    await message.answer('Успешно добавлено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Успешно добавлено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -143,15 +151,15 @@ async def changefaqcall(call: types.CallbackQuery):
     faqid = call.data.split('_')[1]
     await call.message.delete_reply_markup()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Название', callback_data=f'changefaqname_{faqid}')
-    btn2 = types.InlineKeyboardButton('Текст', callback_data=f'changefaqtext_{faqid}')
-    btn3 = types.InlineKeyboardButton('Удалить', callback_data=f'delfaq_{faqid}')
-    btn4 = types.InlineKeyboardButton('Отменить', callback_data='faqset')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Название'), callback_data=f'changefaqname_{faqid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Текст'), callback_data=f'changefaqtext_{faqid}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delfaq_{faqid}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='faqset')
     mkp.add(btn1, btn2).add(btn3).add(btn4)
     if faq_info[2] == 'None' or faq_info[2] == None:
-        await call.message.answer(f'Выбран раздел: <code>{faq_info[0]}</code>\n\n{faq_info[1]}', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Выбран раздел:') + f' <code>{faq_info[0]}</code>\n\n{faq_info[1]}', reply_markup=mkp)
     else:
-        await call.message.answer_photo(open(f'images/{faq_info[2]}', 'rb'), caption=f'Выбран раздел: <code>{faq_info[0]}</code>\n\n{faq_info[1]}', reply_markup=mkp)
+        await call.message.answer_photo(open(f'images/{faq_info[2]}', 'rb'), caption=(translater(call.from_user.id, 'Выбран раздел:') +f' <code>{faq_info[0]}</code>\n\n{faq_info[1]}'), reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='changefaqname_')
@@ -159,7 +167,7 @@ async def changefaqnamecall(call: types.CallbackQuery, state: FSMContext):
     faqid = call.data.split('_')[1]
     faq_info = db.get_faq_adm(int(faqid))
     await call.message.delete()
-    await call.message.answer(f'Старое название раздела: <code>{faq_info[0]}</code>\nВведите новое:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Старое название раздела:') + f' <code>{faq_info[0]}</code>\n'+ translater(call.from_user.id, 'Введите новое:'), reply_markup=cancel_mkp(call.from_user.id))
     await FaqName.FaqId.set()
     async with state.proxy() as data:
         data['FaqId'] = faqid
@@ -171,7 +179,7 @@ async def changefaqnamecall(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='cancel', state=FaqText.Text)
 async def faqnamefaqidcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=FaqName.FaqId)
@@ -179,7 +187,7 @@ async def faqnamefaqidmsg(message: types.Message, state: FSMContext):
     await FaqName.next()
     async with state.proxy() as data:
         data['Name'] = message.text
-    await message.answer('Введите название на английском', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите название на английском'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 @dp.message_handler(state=FaqName.Name)
@@ -189,7 +197,7 @@ async def faqnamenamemsg(message: types.Message, state: FSMContext):
     faqid = data['FaqId']
     name = data['Name']
     db.changefaq_name(int(faqid), name, message.text)
-    await message.answer('Название успешно изменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название успешно изменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -199,7 +207,7 @@ async def changefaqtextcall(call: types.CallbackQuery, state: FSMContext):
     faqid = call.data.split('_')[1]
     faq_info = db.get_faq_adm(int(faqid))
     await call.message.delete()
-    await call.message.answer(f'Старый текст раздела: <code>{faq_info[1]}</code>\nВведите новый:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Старый текст раздела:') + f' <code>{faq_info[1]}</code>\n' + translater(call.from_user.id, 'Введите новый:'), reply_markup=cancel_mkp(call.from_user.id))
     await FaqText.FaqId.set()
     async with state.proxy() as data:
         data['FaqId'] = faqid
@@ -210,7 +218,7 @@ async def faqtextfaqidmsg(message: types.Message, state: FSMContext):
     await FaqText.next()
     async with state.proxy() as data:
         data['Text'] = message.text
-    await message.answer('Введите текст на английском', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите текст на английском'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 @dp.message_handler(state=FaqText.Text)
@@ -220,7 +228,7 @@ async def faqtexttextmsg(message: types.Message, state: FSMContext):
     faqid = data['FaqId']
     text = data['Text']
     db.changefaq_text(int(faqid), text, message.text)
-    await message.answer('Текст раздела успешно изменен. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Текст раздела успешно изменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -230,10 +238,10 @@ async def delfaqcall(call: types.CallbackQuery):
     faq_info = db.get_faq_adm(int(faqid))
     await call.message.delete()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Удалить', callback_data=f'delfaqq_{faqid}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='faqset')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delfaqq_{faqid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='faqset')
     mkp.add(btn1).add(btn2)
-    await call.message.answer(f'Вы действительно хотите удалить раздел <code>{faq_info[0]}</code>', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите удалить раздел') + f' <code>{faq_info[0]}</code>', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='delfaqq_')
@@ -241,7 +249,7 @@ async def delfaqqcall(call: types.CallbackQuery):
     faqid = call.data.split('_')[1]
     await call.message.delete_reply_markup()
     db.del_faq(int(faqid))
-    await call.message.answer('Раздел успешно удален. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Раздел успешно удален. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.callback_query_handler(text='cancel', state=AddCatRus.CatName)
@@ -256,7 +264,7 @@ async def delfaqqcall(call: types.CallbackQuery):
 @dp.callback_query_handler(text='cancel', state=AddSubcat.SubcatEngName)
 async def orderscall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Выберите категорию/действие:', reply_markup=get_categories_admin())
+    await call.message.answer(translater(call.from_user.id, 'Выберите категорию/действие:'), reply_markup=get_categories_admin(call.from_user.id))
     try:
         await state.finish()
     except:
@@ -264,14 +272,15 @@ async def orderscall(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(text='Продукты')
+@dp.message_handler(text='Products')
 async def ordersmsg(message: types.Message):
-    await message.answer('Выберите категорию/действие:', reply_markup=get_categories_admin())
+    await message.answer(translater(message.from_user.id, 'Выберите категорию/действие:'), reply_markup=get_categories_admin(message.from_user.id))
 
 
 @dp.callback_query_handler(text='products')
 async def productscall(call: types.CallbackQuery):
     await call.message.delete()
-    await call.message.answer('Выберите категорию/действие:', reply_markup=get_categories_admin())
+    await call.message.answer(translater(call.from_user.id, 'Выберите категорию/действие:'), reply_markup=get_categories_admin(call.from_user.id))
 
 
 @dp.callback_query_handler(text='addcat')
@@ -279,27 +288,27 @@ async def addcatcall(call: types.CallbackQuery):
     await call.message.delete()
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите название категории:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название категории:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddCat.CatName.set()
     elif check_lan[0] == 1:
-        await call.message.answer('Введите название категории:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название категории:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddCatRus.CatName.set()
     elif check_lan[1] == 1:
-        await call.message.answer('Введите название категории на английском:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название категории на английском:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddCatEng.CatName.set()
 
 
 @dp.message_handler(state=AddCatRus.CatName)
 async def addcatruscatnamemsg(message: types.Message, state: FSMContext):
     db.add_cat(message.text, 'None')
-    await message.answer('Категория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Категория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
 @dp.message_handler(state=AddCatEng.CatName)
 async def addcatruscatnamemsg(message: types.Message, state: FSMContext):
     db.add_cat('None', message.text)
-    await message.answer('Категория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Категория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -307,7 +316,7 @@ async def addcatruscatnamemsg(message: types.Message, state: FSMContext):
 async def addcatcatnamemsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['CatName'] = message.text
-    await message.answer('Введите название категории на английском:', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите название категории на английском:'), reply_markup=cancel_mkp(message.from_user.id))
     await AddCat.next()
 
 
@@ -317,7 +326,7 @@ async def addcatengcatnamemsg(message: types.Message, state: FSMContext):
         pass
     catname = data['CatName']
     db.add_cat(catname, message.text)
-    await message.answer('Категория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Категория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -332,7 +341,7 @@ async def admincatcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     cat_id = call.data.split('_')[1]
     cat_name = db.get_cat_name(int(cat_id))
-    await call.message.answer(f'Категория: <code>{cat_name}</code>\nВыберите, подкатегорию/действие:', reply_markup=get_subcategories_admin(int(cat_id)))
+    await call.message.answer(translater(call.from_user.id, 'Категория:') + f' <code>{cat_name}</code>\n' + translater(call.from_user.id, 'Выберите, подкатегорию/действие:'), reply_markup=get_subcategories_admin(int(cat_id), call.from_user.id))
     try:
         await state.finish()
     except:
@@ -346,19 +355,19 @@ async def addsubcatcall(call: types.CallbackQuery, state: FSMContext):
     check_lan = db.check_lanadd()
     print(check_lan)
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите название подкатегории', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название подкатегории:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddSubcat.CatId.set()
         async with state.proxy() as data:
             data['CatId'] = cat_id
         await AddSubcat.next()
     elif check_lan[0] == 1:
-        await call.message.answer('Введите название подкатегории', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название подкатегории:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddSubcatRus.CatId.set()
         async with state.proxy() as data:
             data['CatId'] = cat_id
         await AddSubcatRus.next()
     elif check_lan[1] == 1:
-        await call.message.answer('Введите название подкатегории на английском', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название подкатегории на английском:'), reply_markup=cancel_mkp(call.from_user.id))
         await AddSubcatEng.CatId.set()
         async with state.proxy() as data:
             data['CatId'] = cat_id
@@ -372,8 +381,8 @@ async def addsubcatsubcatnamemsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['SubcatName'] = message.text
     # db.add_subcat(int(cat_id), message.text)
-    # await message.answer('Подкатегория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
-    await message.answer('Введите название подкатегории на английском', reply_markup=cancel_adm_mkp())
+    # await message.answer('Подкатегория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp(message.from_user.id))
+    await message.answer(translater(message.from_user.id, 'Введите название подкатегории на английском:'), reply_markup=cancel_mkp(message.from_user.id))
     await AddSubcat.next()
 
 
@@ -384,7 +393,7 @@ async def addsubcatrussubcatnamemsg(message: types.Message, state: FSMContext):
     print('here')
     catid = data['CatId']
     db.add_subcat(int(catid), message.text, 'None')
-    await message.answer('Подкатегория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Подкатегория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -394,7 +403,7 @@ async def addsubcatengsubcatnamemsg(message: types.Message, state: FSMContext):
         pass
     catid = data['CatId']
     db.add_subcat(int(catid), 'None', message.text)
-    await message.answer('Подкатегория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Подкатегория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -405,7 +414,7 @@ async def addsubcatengnamemsg(message: types.Message, state: FSMContext):
     catid = data['CatId']
     subcatname = data['SubcatName']
     db.add_subcat(int(catid), subcatname, message.text)
-    await message.answer('Подкатегория успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Подкатегория успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -428,7 +437,7 @@ async def adminsubcatcall(call: types.CallbackQuery, state: FSMContext):
     cat_id = call.data.split('_')[2]
     subcat_name = db.get_subcat_name(int(subcat_id))
     await call.message.delete()
-    await call.message.answer(f'Подкатегория: <code>{subcat_name}</code>\nВыберите товар/действие:', reply_markup=get_goods_admin(int(subcat_id), cat_id))
+    await call.message.answer(translater(call.from_user.id, 'Подкатегория:') + f' <code>{subcat_name}</code>\n' + translater(call.from_user.id, 'Выберите товар/действие:'), reply_markup=get_goods_admin(int(subcat_id), cat_id, call.from_user.id))
     try:
         await state.finish()
     except:
@@ -440,17 +449,17 @@ async def changenamecatcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
     cat_id = call.data.split('_')[1]
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admincat_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Вернуться'), callback_data=f'admincat_{cat_id}')
     mkp.add(btn1)
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите новое название категории:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название категории:'), reply_markup=mkp)
         await ChangeNamecat.CatId.set()
     elif check_lan[0] == 1:
-        await call.message.answer('Введите новое название категории:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название категории:'), reply_markup=mkp)
         await ChangeNamecatRus.CatId.set()
     elif check_lan[1] == 1:
-        await call.message.answer('Введите новое название категории на английском:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название категории на английском:'), reply_markup=mkp)
         await ChangeNamecatEng.CatId.set()
     async with state.proxy() as data:
         data['CatId'] = cat_id
@@ -463,11 +472,11 @@ async def changenamecatcatidmsg(message: types.Message, state: FSMContext):
         data['CatName'] = message.text
     cat_id = data['CatId']
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admincat_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Вернуться'), callback_data=f'admincat_{cat_id}')
     mkp.add(btn1)
     # db.changename_cat(int(cat_id), message.text)
-    # await message.answer('Название категории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
-    await message.answer('Введите название категории на английском языке:', reply_markup=mkp)
+    # await message.answer('Название категории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp(message.from_user.id))
+    await message.answer(translater(message.from_user.id, 'Введите название категории на английском:'), reply_markup=mkp)
 
 
 @dp.message_handler(state=ChangeNamecatEng.CatId)
@@ -476,7 +485,7 @@ async def changenamecatengcatidmsg(message: types.Message, state: FSMContext):
         pass
     cat_id = data['CatId']
     db.changename_cat(int(cat_id), 'None', message.text)
-    await message.answer('Название категории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название категории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -486,7 +495,7 @@ async def changenamecatruscatidmsg(message: types.Message, state: FSMContext):
         pass
     cat_id = data['CatId']
     db.changename_cat(int(cat_id), message.text, 'None')
-    await message.answer('Название категории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название категории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -497,7 +506,7 @@ async def changenamecatcatnamemsg(message: types.Message, state: FSMContext):
     cat_id = data['CatId']
     catname = data['CatName']
     db.changename_cat(int(cat_id), catname, message.text)
-    await message.answer('Название категории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название категории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -506,17 +515,17 @@ async def changenamesubcatcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
     subcat_id = call.data.split('_')[1]
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'adminsubcat_{subcat_id}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Вернуться'), callback_data=f'adminsubcat_{subcat_id}')
     mkp.add(btn1)
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите новое название подкатегории:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название подкатегории:'), reply_markup=mkp)
         await ChangeNamesubcat.SubcatId.set()
     elif check_lan[0] == 1:
-        await call.message.answer('Введите новое название подкатегории:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название подкатегории:'), reply_markup=mkp)
         await ChangeNamesubcatRus.SubcatId.set()
     elif check_lan[1] == 1:
-        await call.message.answer('Введите новое название подкатегории на английском:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название подкатегории на английском:'), reply_markup=mkp)
         await ChangeNamesubcatEng.SubcatId.set()
     async with state.proxy() as data:
         data['SubcatId'] = subcat_id
@@ -529,9 +538,9 @@ async def changenamesubcatsubcatidmsg(message: types.Message, state: FSMContext)
         data['SubcatName'] = message.text
     # subcat_id = data['SubcatId']
     # db.changename_subcat(int(subcat_id), message.text)
-    # await message.answer('Название подкатегории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    # await message.answer('Название подкатегории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp(message.from_user.id))
     # await state.finish()
-    await message.answer('Введите название подкатегории на английском языке', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите название подкатегории на английском языке'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 @dp.message_handler(state=ChangeNamesubcatEng.SubcatId)
@@ -540,7 +549,7 @@ async def changenamesubcatengmsg(message: types.Message, state: FSMContext):
         pass
     subcatid = data['SubcatId']
     db.changename_subcat(int(subcatid, 'None', message.text))
-    await message.answer('Название подкатегории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название подкатегории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -550,7 +559,7 @@ async def changenamesubcatrusmsg(message: types.Message, state: FSMContext):
         pass
     subcatid = data['SubcatId']
     db.changename_subcat(int(subcatid), message.text, 'None')
-    await message.answer('Название подкатегории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название подкатегории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -561,7 +570,7 @@ async def changenamesubncatsubcatnamemsg(message: types.Message, state: FSMConte
     subcatid = data['SubcatId']
     subcatname = data['SubcatName']
     db.changename_subcat(int(subcatid, subcatname, message.text))
-    await message.answer('Название подкатегории успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Название подкатегории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -576,15 +585,15 @@ async def addgoodcall(call: types.CallbackQuery, state: FSMContext):
         data['CatId'] = cat_id
     await call.message.delete()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
     mkp.add(btn1)
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите название товара:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите название товара:'), reply_markup=mkp)
     elif check_lan[0] == 1:
-        await call.message.answer('Введите название товара:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите название товара:'), reply_markup=mkp)
     elif check_lan[1] == 1:
-        await call.message.answer('Введите название на английском:', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите название на английском:'), reply_markup=mkp)
     await AddGood.next()
 
 
@@ -597,9 +606,9 @@ async def addgoodnamemsg(message: types.Message, state: FSMContext):
         subcatid = data['SubcatId']
         cat_id = data['CatId']        
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1)
-        await message.answer('Введите название товара на английском:', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Введите название товара на английском:'), reply_markup=mkp)
         # await message.answer('Введите описание к товару:', reply_markup=mkp)
         await AddGood.next()
     elif check_lan[0] == 1:
@@ -608,9 +617,9 @@ async def addgoodnamemsg(message: types.Message, state: FSMContext):
         subcatid = data['SubcatId']
         cat_id = data['CatId'] 
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1)
-        await message.answer('Введите описание к товару:', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Введите описание к товару:'), reply_markup=mkp)
         await AddGood.next()
         async with state.proxy() as data:
             data['EngName'] = 'None'
@@ -624,9 +633,9 @@ async def addgoodnamemsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['EngName'] = message.text
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1)
-        await message.answer('Введите описание к товару на английском:', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Введите описание к товару на английском:'), reply_markup=mkp)
         await AddGood.next()
         await AddGood.next()
 
@@ -638,9 +647,9 @@ async def addgoodengnamemsg(message: types.Message, state: FSMContext):
     subcatid = data['SubcatId']
     cat_id = data['CatId'] 
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
     mkp.add(btn1)
-    await message.answer('Введите описание к товару:', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Введите описание к товару:'), reply_markup=mkp)
     await AddGood.next()
 
 @dp.message_handler(state=AddGood.Description)
@@ -652,10 +661,10 @@ async def addgooddescriptionmsg(message: types.Message, state: FSMContext):
         subcatid = data['SubcatId']
         cat_id = data['CatId'] 
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1)
 
-        await message.answer('Введите описание к товару на английском:', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Введите описание к товару на английском:'), reply_markup=mkp)
         await AddGood.next()
     elif check_lan[0] == 1:
         async with state.proxy() as data:
@@ -666,10 +675,10 @@ async def addgooddescriptionmsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['EngDescription'] = 'None'
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Пропустить', callback_data='skip')
-        btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='skip')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1).add(btn2)
-        await message.answer('Отправьте фото или нажмите пропустить', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Отправьте фото или нажмите "Пропустить"'), reply_markup=mkp)
         await AddGood.next()
     elif check_lan[1] == 1:
         async with state.proxy() as data:
@@ -680,10 +689,10 @@ async def addgooddescriptionmsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['EngDescription'] = message.text
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Пропустить', callback_data='skip')
-        btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='skip')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1).add(btn2)
-        await message.answer('Отправьте фото или нажмите пропустить', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Отправьте фото или нажмите "Пропустить"'), reply_markup=mkp)
         await AddGood.next()
         
         
@@ -695,10 +704,10 @@ async def addgoodengdescmsg(message: types.Message, state: FSMContext):
     subcatid = data['SubcatId']
     cat_id = data['CatId'] 
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Пропустить', callback_data='skip')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='skip')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
     mkp.add(btn1).add(btn2)
-    await message.answer('Отправьте фото или нажмите пропустить', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Отправьте фото или нажмите "Пропустить"'), reply_markup=mkp)
     await AddGood.next()
 
 @dp.message_handler(content_types='photo', state=AddGood.Photo)
@@ -711,9 +720,9 @@ async def addgoodphotophoto(message: types.Message, state: FSMContext):
     subcatid = data['SubcatId']
     cat_id = data['CatId'] 
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
     mkp.add(btn1)
-    await message.answer('Введите цену (целым числом, либо через точку, например: <code>249.50</code>)', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Введите цену (целым числом, либо через точку, например: <code>249.50</code>)'), reply_markup=mkp)
     await AddGood.next()
 
 @dp.callback_query_handler(text='skip', state=AddGood.Photo)
@@ -723,10 +732,10 @@ async def addgoodphotoskipcall(call: types.CallbackQuery, state: FSMContext):
     subcatid = data['SubcatId']
     cat_id = data['CatId'] 
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
     mkp.add(btn1)
     await call.message.delete_reply_markup()
-    await call.message.answer('Введите цену (целым числом, либо через точку, например: <code>249.50</code>)', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Введите цену (целым числом, либо через точку, например: <code>249.50</code>)'), reply_markup=mkp)
     await AddGood.next()
 
 
@@ -743,28 +752,28 @@ async def addgoodprice(message: types.Message, state: FSMContext):
         description = data['Description']
         engdesc = data['EngDescription']
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Добавить', callback_data='add')
-        btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='add')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1).add(btn2)
         if name != 'None' and engname != 'None':
             await message.answer(f'Name: {engname}\nDescription: {engdesc}')
             if data['Photo'] == 'None':
-                await message.answer(f'Название товара: <code>{name}</code>\nОписание: <code>{description}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
             else:
                 photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=f'Название товара: <code>{name}</code>\nОписание: <code>{description}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
         elif name !=  'None':
             if data['Photo'] == 'None':
-                await message.answer(f'Название товара: <code>{name}</code>\nОписание: <code>{description}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
             else:
                 photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=f'Название товара: <code>{name}</code>\nОписание: <code>{description}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
         elif name == 'None':
             if data['Photo'] == 'None':
-                await message.answer(f'Название товара: <code>{engname}</code>\nОписание: <code>{engdesc}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
             else:
                 photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=f'Название товара: <code>{engname}</code>\nОписание: <code>{engdesc}</code>\nЦена: <code>{price}</code>', reply_markup=mkp)
+                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
     except Exception as ex:
         print(ex)
         async with state.proxy() as data:
@@ -772,9 +781,9 @@ async def addgoodprice(message: types.Message, state: FSMContext):
         subcatid = data['SubcatId']
         cat_id = data['CatId'] 
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Отменить', callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1)
-        await message.answer('Вы неправильно ввели цену! Введите цену целым числом, либо через точку, например: <code>249.50</code>')
+        await message.answer(translater(message.from_user.id, 'Вы неправильно ввели цену! Введите цену целым числом, либо через точку, например: <code>249.50</code>'))
 
 @dp.callback_query_handler(text='add', state=AddGood.Price)
 async def addgoodpricecalladd(call: types.CallbackQuery, state: FSMContext):
@@ -790,7 +799,7 @@ async def addgoodpricecalladd(call: types.CallbackQuery, state: FSMContext):
     currency = db.get_currencysetadm()[0]
     db.add_good(subcat_id, name, engname, description, engdesc, photo, price, currency)
     await call.message.delete()
-    await call.message.answer('Товар был успешно добавлен! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Товар был успешно добавлен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 
@@ -813,16 +822,16 @@ async def admingoodcall(call: types.CallbackQuery, state: FSMContext):
     goodid = call.data.split('_')[1]
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Название', callback_data=f'changegoodname_{goodid}')
-    btn2 = types.InlineKeyboardButton('Описание', callback_data=f'changegooddesc_{goodid}')
-    btn3 = types.InlineKeyboardButton('Цену', callback_data=f'changegoodprice_{goodid}')
-    btn4 = types.InlineKeyboardButton('Удалить', callback_data=f'delgood_{goodid}')
-    btn5 = types.InlineKeyboardButton('Отменить', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Название'), callback_data=f'changegoodname_{goodid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Описание'), callback_data=f'changegooddesc_{goodid}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Цену'), callback_data=f'changegoodprice_{goodid}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delgood_{goodid}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='admin')
     mkp.add(btn1).add(btn2, btn3).add(btn4).add(btn5)
     if good_info[3] == 'None':
-        await call.message.answer(f'Название товара: <code>{good_info[0]}</code>\nОписание товара: <code>{good_info[1]}</code>\nЦена: <code>{good_info[2]}</code>\n\nВыберите, что вы хотите изменить', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить'), reply_markup=mkp)
     else:
-        await call.message.answer_photo(open(f'images/{good_info[3]}', 'rb'), caption=f'Название товара: <code>{good_info[0]}</code>\nОписание товара: <code>{good_info[1]}</code>\nЦена: <code>{good_info[2]}</code>\n\nВыберите, что вы хотите изменить', reply_markup=mkp)
+        await call.message.answer_photo(open(f'images/{good_info[3]}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить')), reply_markup=mkp)
     try:
         await state.finish()
     except:
@@ -835,17 +844,17 @@ async def changegoodnamecall(call: types.CallbackQuery, state: FSMContext):
     goodid = call.data.split('_')[1]
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1)
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer(f'Введите новое название для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeNameGood.GoodId.set()
     elif check_lan[0] == 1:
-        await call.message.answer(f'Введите новое название для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeNameGoodRus.GoodId.set()
     elif check_lan[1] == 1:
-        await call.message.answer(f'Введите новое название на английском для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое название на английском для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeNameGoodEng.GoodId.set()
     async with state.proxy() as data:
         data['GoodId'] = goodid
@@ -859,9 +868,9 @@ async def changenamegoodgoodidmsg(message: types.Message, state: FSMContext):
     goodid = data['GoodId']
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1)
-    await message.answer('Введите новое название товара на английском:', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Введите новое название товара на английском:'), reply_markup=mkp)
 
 @dp.message_handler(state=ChangeNameGoodEng.GoodId)
 async def changenamegoodengmsg(message: types.Message, state: FSMContext):
@@ -897,17 +906,17 @@ async def changegooddesccall(call: types.CallbackQuery, state: FSMContext):
     goodid = call.data.split('_')[1]
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1)
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer(f'Введите новое описание для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое описание для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeDescGood.GoodId.set()
     elif check_lan[0] == 1:
-        await call.message.answer(f'Введите новое описание для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое описание для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeDescGoodRus.GoodId.set()
     elif check_lan[1] == 1:
-        await call.message.answer(f'Введите новое описание для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Введите новое описание на английском для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
         await ChangeDescGoodEng.GoodId.set()
     async with state.proxy() as data:
         data['GoodId'] = goodid
@@ -921,9 +930,9 @@ async def changedescgoodgoodidmsg(message: types.Message, state: FSMContext):
     goodid = data['GoodId']
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1)
-    await message.answer('Введите описание на английском:', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Введите описание на английском:'), reply_markup=mkp)
 
 
 @dp.message_handler(state=ChangeDescGoodEng.GoodId)
@@ -963,9 +972,9 @@ async def changegoodpricecall(call: types.CallbackQuery, state: FSMContext):
     goodid = call.data.split('_')[1]
     good_info = db.get_goodinfo(int(goodid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1)
-    await call.message.answer(f'Введите новую цену для товара <code>{good_info[0]}</code>', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Введите новую цену для товара') + f' <code>{good_info[0]}</code>', reply_markup=mkp)
     await ChangePriceGood.GoodId.set()
     async with state.proxy() as data:
         data['GoodId'] = goodid
@@ -983,9 +992,9 @@ async def changepricegoodgoodidmsg(message: types.Message, state: FSMContext):
         await state.finish()
     except:
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Вернуться', callback_data=f'admingood_{goodid}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Вернуться'), callback_data=f'admingood_{goodid}')
         mkp.add(btn1)
-        await message.answer('Введите цену целым числом, либо через точку, например <code>149.50</code>', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Введите цену целым числом, либо через точку, например <code>149.50</code>'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='delgood_')
 async def delgoodcall(call: types.CallbackQuery):
@@ -993,10 +1002,10 @@ async def delgoodcall(call: types.CallbackQuery):
     good_info = db.get_goodinfo(int(goodid))
     await call.message.delete_reply_markup()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Удалить', callback_data=f'delgoodd_{goodid}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'admingood_{goodid}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delgoodd_{goodid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data=f'admingood_{goodid}')
     mkp.add(btn1, btn2)
-    await call.message.answer(f'Вы действительно хотите удалить товар <code>{good_info[0]}</code>?', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите удалить товар') + f' <code>{good_info[0]}</code>?', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='delgoodd_')
@@ -1004,7 +1013,7 @@ async def delgooddcall(call: types.CallbackQuery):
     goodid = call.data.split('_')[1]
     db.del_good(int(goodid))
     await call.message.delete()
-    await call.message.answer('Товар успешно удален! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Товар успешно удален! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 @dp.callback_query_handler(text_contains='delcat_')
 async def delcatcall(call: types.CallbackQuery):
@@ -1012,10 +1021,10 @@ async def delcatcall(call: types.CallbackQuery):
     catname = db.get_namecat(int(catid))
     await call.message.delete_reply_markup()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Удалить', callback_data=f'delcatt_{catid}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delcatt_{catid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='admin')
     mkp.add(btn1, btn2)
-    await call.message.answer(f'Вы действительно хотите удалить категорию <code>{catname}</code>?', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите удалить категорию') + f' <code>{catname}</code>?', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='delcatt_')
@@ -1023,7 +1032,7 @@ async def delcattcall(call: types.CallbackQuery):
     catid = call.data.split('_')[1]
     db.del_cat(int(catid))
     await call.message.delete()
-    await call.message.answer('Категория успешно удалена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Категория успешно удалена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.callback_query_handler(text_contains='delsubcat_')
@@ -1032,51 +1041,53 @@ async def delsubcatcall(call: types.CallbackQuery):
     subcatname = db.get_namesubcat(int(subcatid))
     await call.message.delete_reply_markup()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Удалить', callback_data=f'delsubcatt_{subcatid}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'delsubcatt_{subcatid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='admin')
     mkp.add(btn1, btn2)
-    await call.message.answer(f'Вы действительно хотите удалить категорию <code>{subcatname}</code>?', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите удалить подкатегорию') + f' <code>{subcatname}</code>?', reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='delsubcatt_')
 async def delsubcattcall(call: types.CallbackQuery):
     subcatid = call.data.split('_')[1]
     await call.message.delete()
     db.del_subcat(int(subcatid))
-    await call.message.answer('Подкатегория успешно удалена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Подкатегория успешно удалена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 
 @dp.message_handler(text='Изменение реф')
+@dp.message_handler(text='Change ref')
 async def changerefmsg(message: types.Message):
     ref = db.get_refproc()
-    await message.answer(f'Действующий процент с реф системы: <code>{ref}</code>\nВведите новый', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Действующий процент с реф системы:') + f' <code>{ref}</code>\n' + translater(message.from_user.id, 'Введите новый'), reply_markup=cancel_mkp(message.from_user.id))
     await ChangeRef.Ref.set()
 
 @dp.callback_query_handler(state=ChangeRef.Ref, text='cancel')
 async def cancelchangerefrefcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChangeRef.Ref)
 async def changerefrefmsg(message: types.Message, state: FSMContext):
     if message.text.isdigit():
         db.change_ref(message.text)
-        await message.answer('Процент с реф системы успешно изменен! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Процент с реф системы успешно изменен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:
-        await message.answer('Введите процент целым числом, либо нажмите "Отменить"', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите процент целым числом, либо нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.message_handler(text='Заказы')
+@dp.message_handler(text='Orders')
 async def ordersmsg(message: types.Message):
     orders = db.get_all_activeorders()
     if len(orders) == 0:
-        await message.answer('Активных заказов не обнаружено')
+        await message.answer(translater(message.from_user.id, 'Активных заказов не обнаружено'))
     else:
         mkp = types.InlineKeyboardMarkup()
         for i in orders:
-            mkp.add(types.InlineKeyboardButton(f'Активный заказ №{i[0]}', callback_data=f'orderadmin_{i[0]}'))
-        await message.answer('Список активных заказов:', reply_markup=mkp)
+            mkp.add(types.InlineKeyboardButton(translater(message.from_user.id, 'Активный заказ №') + f'{i[0]}', callback_data=f'orderadmin_{i[0]}'))
+        await message.answer(translater(message.from_user.id, 'Список активных заказов:'), reply_markup=mkp)
 
 
 
@@ -1102,10 +1113,10 @@ async def orderadmincall(call: types.CallbackQuery):
         except:
             text=f'{text}{step}.{a}\n'
         step=step+1
-    text=f'{text}\n{adress}\nКомментарий: <code>{comment}</code>'
+    text=f'{text}\n{adress}\n' + translater(call.from_user.id, 'Комментарий:') + f' <code>{comment}</code>'
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Подтвердить', callback_data=f'orderok_{order_id}')
-    btn2 = types.InlineKeyboardButton('Отклонить', callback_data=f'orderno_{order_id}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Подтвердить'), callback_data=f'orderok_{order_id}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отклонить'), callback_data=f'orderno_{order_id}')
     mkp.add(btn1).add(btn2)
     await call.message.answer(text, reply_markup=mkp)
 
@@ -1118,10 +1129,10 @@ async def ordernocall(call: types.CallbackQuery):
     p = db.get_order_price(int(order_id))[-1]
     try:
         db.add_balance(int(user_id), float(p))
-        await bot.send_message(int(user_id), f'Менеджер отклонил заказ. Свяжитесь с ним для подробностей: @{call.from_user.username}')
-        await call.message.answer('Клиент получил уведомление и ваш username для связи')
+        await bot.send_message(int(user_id), translater(call.from_user.id, 'Менеджер отклонил заказ. Свяжитесь с ним для подробностей: @') + f'{call.from_user.username}')
+        await call.message.answer(translater(call.from_user.id, 'Клиент получил уведомление и ваш username для связи'))
     except:
-        await call.message.answer('Клиент заблокировал бота')
+        await call.message.answer(translater(call.from_user.id, 'Клиент заблокировал бота'))
 
 
 @dp.callback_query_handler(text_contains='orderok_')
@@ -1132,15 +1143,15 @@ async def orderokcall(call: types.CallbackQuery, state: FSMContext):
         data['OrderId'] = order_id
     await call.message.delete_reply_markup()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Подтвердить', callback_data='ok')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Подтвердить'), callback_data='ok')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
-    await call.message.answer('Отправьте фотографию чека и трек кода. ВНИМАНИЕ, все сообщения, что вы напишите - получит пользователь.', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Отправьте фотографию чека и трек кода. ВНИМАНИЕ, все сообщения, что вы напишите - сразу получит пользователь'), reply_markup=mkp)
 
 @dp.callback_query_handler(text='cancel', state=OrderEnd.OrderId)
 async def cancelorderendorderidcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 
@@ -1151,16 +1162,16 @@ async def orderendorderidphoto(message: types.Message, state: FSMContext):
     order_id = data['OrderId']
     user_id = db.get_order_userid(int(order_id))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Подтвердить', callback_data='ok')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Подтвердить'), callback_data='ok')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
     try:
         await bot.send_photo(int(user_id), message.photo[-1].file_id, caption=f'Менеджер отправил фото трек кода и чека по заказу №{order_id}')
-        await message.answer('Пользователь получил фотографию. Отправьте ещё сообщение или нажмите "Подтвердить"', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Пользователь получил фотографию. Отправьте ещё сообщение или нажмите "Подтвердить"'), reply_markup=mkp)
     except:
-        await message.answer('Пользователь заблокировал бота. Заказ перешел в завершенный')
+        await message.answer(translater(message.from_user.id, 'Пользователь заблокировал бота. Заказ перешел в завершенный'))
         db.order_end(int(order_id))
-        await message.answer('Вы в админ-панели', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Вы в админ-панели'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
 
 @dp.callback_query_handler(text='ok', state=OrderEnd.OrderId)
@@ -1171,9 +1182,9 @@ async def orderendorderidokcall(call: types.CallbackQuery, state: FSMContext):
     user_id = db.get_order_userid(int(order_id))
     await bot.send_message(int(user_id), translater(int(user_id), 'По желанию, вы можете оставить отзыв'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(translater(int(user_id), 'Оставить отзыв'), callback_data=f'takeotziv_{order_id}')))
     await call.message.delete()
-    await call.message.answer('Заказ перешел в завершенный')
+    await call.message.answer(translater(call.from_user.id, 'Заказ перешел в завершенный'))
     db.order_end(int(order_id))
-    await call.message.answer('Вы в админ-панели', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Вы в админ-панели'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=OrderEnd.OrderId)
@@ -1183,38 +1194,39 @@ async def orderendorderidmsg(message: types.Message, state: FSMContext):
     order_id = data['OrderId']
     user_id = db.get_order_userid(int(order_id))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Подтвердить', callback_data='ok')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Подтвердить'), callback_data='ok')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
     try:
         await bot.send_message(int(user_id), f'{message.text}')
-        await message.answer('Пользователь получил сообщение. Отправьте ещё или нажмите "Подтвердить"', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Пользователь получил сообщение. Отправьте ещё или нажмите "Подтвердить"'), reply_markup=mkp)
     except:
-        await message.answer('Пользователь заблокировал бота. Заказ перешел в завершенный')
+        await message.answer(translater(message.from_user.id, 'Пользователь заблокировал бота. Заказ перешел в завершенный'))
         db.order_end(int(order_id))
-        await message.answer('Вы в админ-панели', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Вы в админ-панели'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
 
 @dp.message_handler(text='Пользователи')
+@dp.message_handler(text='Users')
 async def usersmsg(message: types.Message):
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Рассылка покупателям', callback_data='rassilka')
-    btn2 = types.InlineKeyboardButton('Рассылка всем', callback_data='rassilkaall')
-    btn3 = types.InlineKeyboardButton('Список пользователей', callback_data='userslist')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Рассылка покупателям'), callback_data='rassilka')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Рассылка всем'), callback_data='rassilkaall')
+    btn3 = types.InlineKeyboardButton(translater(message.from_user.id, 'Список пользователей'), callback_data='userslist')
     mkp.add(btn1).add(btn2).add(btn3)
-    await message.answer('Выберите действие', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Выберите действие'), reply_markup=mkp)
 
 @dp.callback_query_handler(text='rassilkaall')
 async def rassilkaallcall(call: types.CallbackQuery):
     await call.message.delete()
-    await call.message.answer('Введите сообщение для рассылки:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите сообщение для рассылки:'), reply_markup=cancel_mkp(call.from_user.id))
     await RassilkaAll.List.set()
 
 @dp.message_handler(content_types=['text', 'photo', 'video'], state=RassilkaAll.List)
 async def rassilkaalltextmsg(message: types.Message, state: FSMContext):
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отправить', callback_data='go')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отправить'), callback_data='go')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
 
     if message.photo:
@@ -1232,13 +1244,13 @@ async def rassilkaalltextmsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['List'] = {"type": "text", "msg_id": int(message.message_id), "text": message.text}
 
-    await message.answer(f'Вы хотите отправить сообщение выше всем пользователям?', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, f'Вы хотите отправить сообщение выше всем пользователям?'), reply_markup=mkp)
 
 @dp.callback_query_handler(text='go', state=RassilkaAll.List)
 async def gorassilkaalltextcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
-    await call.message.answer('Рассылка началась!')
-    await call.message.answer('Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Рассылка началась!'))
+    await call.message.answer(translater(call.from_user.id, 'Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     async with state.proxy() as data:
         pass
     paramList = data['List']
@@ -1254,26 +1266,26 @@ async def gorassilkaalltextcall(call: types.CallbackQuery, state: FSMContext):
             await bot.copy_message(user[1], call.from_user.id, msg_id)            
         except:
             pass
-    await call.message.answer('Рассылка завершена!')
+    await call.message.answer(translater(call.from_user.id, 'Рассылка завершена!'))
 
 @dp.callback_query_handler(text='rassilka')
 async def rassilkacall(call: types.CallbackQuery):
     await call.message.delete()
-    await call.message.answer('Введите сообщение для рассылки:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите сообщение для рассылки:'), reply_markup=cancel_mkp(call.from_user.id))
     await Rassilka.List.set()
 
 @dp.callback_query_handler(text='cancel', state=Rassilka.List)
 @dp.callback_query_handler(text='cancel', state=RassilkaAll.List)
 async def cancelrassilkatextcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=Rassilka.List)
 async def rassilkatextmsg(message: types.Message, state: FSMContext):
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Отправить', callback_data='go')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отправить'), callback_data='go')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
 
     if message.photo:
@@ -1291,13 +1303,13 @@ async def rassilkatextmsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['List'] = {"type": "text", "msg_id": int(message.message_id), "text": message.text}
 
-    await message.answer(f'Вы хотите отправить сообщение выше всем пользователям?', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, f'Вы хотите отправить сообщение выше всем пользователям?'), reply_markup=mkp)
 
 @dp.callback_query_handler(text='go', state=Rassilka.List)
 async def gorassilkatextcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
-    await call.message.answer('Рассылка началась!')
-    await call.message.answer('Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Рассылка началась!'))
+    await call.message.answer(translater(call.from_user.id, 'Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     async with state.proxy() as data:
         pass
     paramList = data['List']
@@ -1312,22 +1324,22 @@ async def gorassilkatextcall(call: types.CallbackQuery, state: FSMContext):
             await bot.copy_message(user[1], call.from_user.id, msg_id)
         except:
             pass
-    await call.message.answer('Рассылка завершена!')
+    await call.message.answer(translater(call.from_user.id, 'Рассылка завершена!'))
 
 @dp.callback_query_handler(text='userslist')
 async def userslistcall(call: types.CallbackQuery):
     await call.message.delete()
-    await call.message.answer('Страница №1', reply_markup=all_users_mkp(1))
+    await call.message.answer(translater(call.from_user.id, 'Страница') + ' №1', reply_markup=all_users_mkp(1, call.from_user.id))
 
 @dp.callback_query_handler(text_contains='usersnext_')
 async def usersnextcall(call: types.CallbackQuery):
     page = call.data.split('_')[1]
-    await call.message.edit_text(f'Страница №{page}', reply_markup=all_users_mkp(int(page)))
+    await call.message.edit_text(translater(call.from_user.id, 'Страница') + f' №{page}', reply_markup=all_users_mkp(int(page), call.from_user.id))
 
 @dp.callback_query_handler(text_contains='usersback_')
 async def usersnextcall(call: types.CallbackQuery):
     page = call.data.split('_')[1]
-    await call.message.edit_text(f'Страница №{page}', reply_markup=all_users_mkp(int(page)))
+    await call.message.edit_text(translater(call.from_user.id, 'Страница') + f' №{page}', reply_markup=all_users_mkp(int(page), call.from_user.id))
 
 @dp.callback_query_handler(text_contains='getuser_')
 async def getusercall(call: types.CallbackQuery):
@@ -1350,26 +1362,26 @@ async def getusercall(call: types.CallbackQuery):
         pay_count = 0
     userstatus = db.get_userstatus_new(int(user_id))
     mkp = types.InlineKeyboardMarkup(row_width=2)
-    btn1 = types.InlineKeyboardButton('Изменить баланс', callback_data=f'changebalance_{user_id}')
-    btn2 = types.InlineKeyboardButton('Изменить статус', callback_data=f'changestatus_{user_id}')
-    btn3 = types.InlineKeyboardButton('Изменить ник', callback_data=f'changenockname_{user_id}')
-    btn4 = types.InlineKeyboardButton('Выдать промокод', callback_data=f'givepromo_{user_id}')
-    btn5 = types.InlineKeyboardButton('Обнулить реф', callback_data=f'obnylrefzar_{user_id}')
-    btn6 = types.InlineKeyboardButton('Установить скидку', callback_data=f'giveskidka_{user_id}')
-    btn7 = types.InlineKeyboardButton('Отпр. Сообщение', callback_data=f'sendmsg_{user_id}')
-    btn8 = types.InlineKeyboardButton('Заблокировать', callback_data=f'ban_{user_id}')
-    btn9 = types.InlineKeyboardButton('Разблокировать', callback_data=f'banun_{user_id}')
-    btn11 = types.InlineKeyboardButton('Изменить персональный РЕФ%', callback_data=f'changepersref_{user_id}')
-    btn10 = types.InlineKeyboardButton('Назад', callback_data=f'usersback_{page}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить баланс'), callback_data=f'changebalance_{user_id}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить статус'), callback_data=f'changestatus_{user_id}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить ник'), callback_data=f'changenockname_{user_id}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выдать промокод'), callback_data=f'givepromo_{user_id}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Обнулить реф'), callback_data=f'obnylrefzar_{user_id}')
+    btn6 = types.InlineKeyboardButton(translater(call.from_user.id, 'Установить скидку'), callback_data=f'giveskidka_{user_id}')
+    btn7 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отпр. Сообщение'), callback_data=f'sendmsg_{user_id}')
+    btn8 = types.InlineKeyboardButton(translater(call.from_user.id, 'Заблокировать'), callback_data=f'ban_{user_id}')
+    btn9 = types.InlineKeyboardButton(translater(call.from_user.id, 'Разблокировать'), callback_data=f'banun_{user_id}')
+    btn11 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить персональный РЕФ%'), callback_data=f'changepersref_{user_id}')
+    btn10 = types.InlineKeyboardButton(translater(call.from_user.id, 'Назад'), callback_data=f'usersback_{page}')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await call.message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else "Отсутствует"}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round(float(db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Статус пользователя:') + f' {userstatus}\n-------------------\n' + translater(call.from_user.id, 'Ник:') + f' {nickame}\n' + translater(call.from_user.id, 'Логин:') + f' @{username}\n' + translater(call.from_user.id, 'Баланс:') + f' {round(float(balance), 2)}\n' + translater(call.from_user.id, 'Персональная скидка:') + f' {db.get_procent(int(user_id))}%\n' + translater(call.from_user.id, 'Персональный РЕФ:') + f' {db.get_refproc_for_user(int(user_id))}%\n' + translater(call.from_user.id, 'Купон на скидку:') + f' {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else translater(call.from_user.id, "Отсутствует")}\n-------------------\n' + translater(call.from_user.id, 'Личная статистика:\nПокупок:') + f' {pay_count}\n' + translater(call.from_user.id, 'На сумму:') + f' {round(float(db.get_count_buyspr(int(user_id))), 2)}\n' + translater(call.from_user.id, 'Статистика реф.системы:\nРеф. приглашено:') + f' {db.get_count_refs(int(user_id))}\n' + translater(call.from_user.id, 'Реф. заработано:') + f' {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='changestatus_')
 async def changestatuscall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     userid = call.data.split('_')[1]
-    await call.message.answer('Введите новый статус покупателя:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите новый статус покупателя:'), reply_markup=cancel_mkp(call.from_user.id))
     await ChangeStatus.UserId.set()
     async with state.proxy() as data:
         data['UserId'] = userid
@@ -1380,7 +1392,7 @@ async def chjangestatususeridmsg(message: types.Message, state: FSMContext):
         pass
     user_id = data['UserId']
     db.admchange_status(int(user_id), message.text)
-    await message.answer('Новый статус успешно присвоен!')
+    await message.answer(translater(message.from_user.id, 'Новый статус успешно присвоен!'))
     await state.finish()
     page = 1
     user_info = db.get_user_info(int(user_id))
@@ -1399,19 +1411,19 @@ async def chjangestatususeridmsg(message: types.Message, state: FSMContext):
         pay_count = 0
     userstatus = db.get_userstatus_new(int(user_id))
     mkp = types.InlineKeyboardMarkup(row_width=2)
-    btn1 = types.InlineKeyboardButton('Изменить баланс', callback_data=f'changebalance_{user_id}')
-    btn2 = types.InlineKeyboardButton('Изменить статус', callback_data=f'changestatus_{user_id}')
-    btn3 = types.InlineKeyboardButton('Изменить ник', callback_data=f'changenockname_{user_id}')
-    btn4 = types.InlineKeyboardButton('Выдать промокод', callback_data=f'givepromo_{user_id}')
-    btn5 = types.InlineKeyboardButton('Обнулить реф', callback_data=f'obnylrefzar_{user_id}')
-    btn6 = types.InlineKeyboardButton('Установить скидку', callback_data=f'giveskidka_{user_id}')
-    btn7 = types.InlineKeyboardButton('Отпр. Сообщение', callback_data=f'sendmsg_{user_id}')
-    btn8 = types.InlineKeyboardButton('Заблокировать', callback_data=f'ban_{user_id}')
-    btn9 = types.InlineKeyboardButton('Разблокировать', callback_data=f'banun_{user_id}')
-    btn11 = types.InlineKeyboardButton('Изменить персональный РЕФ%', callback_data=f'changepersref_{user_id}')
-    btn10 = types.InlineKeyboardButton('Назад', callback_data=f'usersback_{page}')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить баланс'), callback_data=f'changebalance_{user_id}')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить статус'), callback_data=f'changestatus_{user_id}')
+    btn3 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить ник'), callback_data=f'changenockname_{user_id}')
+    btn4 = types.InlineKeyboardButton(translater(message.from_user.id, 'Выдать промокод'), callback_data=f'givepromo_{user_id}')
+    btn5 = types.InlineKeyboardButton(translater(message.from_user.id, 'Обнулить реф'), callback_data=f'obnylrefzar_{user_id}')
+    btn6 = types.InlineKeyboardButton(translater(message.from_user.id, 'Установить скидку'), callback_data=f'giveskidka_{user_id}')
+    btn7 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отпр. Сообщение'), callback_data=f'sendmsg_{user_id}')
+    btn8 = types.InlineKeyboardButton(translater(message.from_user.id, 'Заблокировать'), callback_data=f'ban_{user_id}')
+    btn9 = types.InlineKeyboardButton(translater(message.from_user.id, 'Разблокировать'), callback_data=f'banun_{user_id}')
+    btn11 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить персональный РЕФ%'), callback_data=f'changepersref_{user_id}')
+    btn10 = types.InlineKeyboardButton(translater(message.from_user.id, 'Назад'), callback_data=f'usersback_{page}')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await message.answer(f'Статус пользователя: {userstatus}\n-------------------\nНик: {nickame}\nЛогин: @{username}\nБаланс: {round(float(balance), 2)}\nПерсональная скидка: {db.get_procent(int(user_id))}%\nПерсональный РЕФ: {db.get_refproc_for_user(int(user_id))}%\nКупон на скидку: {db.get_promoadm(int(user_id))}\n-------------------\nЛичная статистика:\nПокупок: {pay_count}\nНа сумму: {round(float(db.get_count_buyspr(int(user_id))), 2)}\nСтатистика реф.системы:\nРеф. приглашено: {db.get_count_refs(int(user_id))}\nРеф. заработано: {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
+    await message.message.answer(translater(message.from_user.id, 'Статус пользователя:') + f' {userstatus}\n-------------------\n' + translater(message.from_user.id, 'Ник:') + f' {nickame}\n' + translater(message.from_user.id, 'Логин:') + f' @{username}\n' + translater(message.from_user.id, 'Баланс:') + f' {round(float(balance), 2)}\n' + translater(message.from_user.id, 'Персональная скидка:') + f' {db.get_procent(int(user_id))}%\n' + translater(message.from_user.id, 'Персональный РЕФ:') + f' {db.get_refproc_for_user(int(user_id))}%\n' + translater(message.from_user.id, 'Купон на скидку:') + f' {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else translater(message.from_user.id, "Отсутствует")}\n-------------------\n' + translater(message.from_user.id, 'Личная статистика:\nПокупок:') + f' {pay_count}\n' + translater(message.from_user.id, 'На сумму:') + f' {round(float(db.get_count_buyspr(int(user_id))), 2)}\n' + translater(message.from_user.id, 'Статистика реф.системы:\nРеф. приглашено:') + f' {db.get_count_refs(int(user_id))}\n' + translater(message.from_user.id, 'Реф. заработано:') + f' {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
     
 @dp.callback_query_handler(text_contains='changestatuss_')
 async def changestatusscall(call: types.CallbackQuery):
@@ -1430,19 +1442,19 @@ async def changestatusscall(call: types.CallbackQuery):
     else:
         userstatus = 'Заблокирован'
     mkp = types.InlineKeyboardMarkup(row_width=2)
-    btn1 = types.InlineKeyboardButton('Изменить баланс', callback_data=f'changebalance_{user_id}')
-    btn2 = types.InlineKeyboardButton('Изменить статус', callback_data=f'changestatus_{user_id}')
-    btn3 = types.InlineKeyboardButton('Изменить ник', callback_data=f'changenockname_{user_id}')
-    btn4 = types.InlineKeyboardButton('Выдать промокод', callback_data=f'givepromo_{user_id}')
-    btn5 = types.InlineKeyboardButton('Обнулить реф', callback_data=f'obnylrefzar_{user_id}')
-    btn6 = types.InlineKeyboardButton('Установить скидку', callback_data=f'giveskidka_{user_id}')
-    btn7 = types.InlineKeyboardButton('Отпр. Сообщение', callback_data=f'sendmsg_{user_id}')
-    btn8 = types.InlineKeyboardButton('Заблокировать', callback_data=f'ban_{user_id}')
-    btn9 = types.InlineKeyboardButton('Разблокировать', callback_data=f'banun_{user_id}')
-    btn11 = types.InlineKeyboardButton('Изменить персональный РЕФ%', callback_data=f'changepersref_{user_id}')
-    btn10 = types.InlineKeyboardButton('Назад', callback_data=f'usersback_1')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить баланс'), callback_data=f'changebalance_{user_id}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить статус'), callback_data=f'changestatus_{user_id}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить ник'), callback_data=f'changenockname_{user_id}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выдать промокод'), callback_data=f'givepromo_{user_id}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Обнулить реф'), callback_data=f'obnylrefzar_{user_id}')
+    btn6 = types.InlineKeyboardButton(translater(call.from_user.id, 'Установить скидку'), callback_data=f'giveskidka_{user_id}')
+    btn7 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отпр. Сообщение'), callback_data=f'sendmsg_{user_id}')
+    btn8 = types.InlineKeyboardButton(translater(call.from_user.id, 'Заблокировать'), callback_data=f'ban_{user_id}')
+    btn9 = types.InlineKeyboardButton(translater(call.from_user.id, 'Разблокировать'), callback_data=f'banun_{user_id}')
+    btn11 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить персональный РЕФ%'), callback_data=f'changepersref_{user_id}')
+    btn10 = types.InlineKeyboardButton(translater(call.from_user.id, 'Назад'), callback_data=f'usersback_1')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await call.message.answer(f'Информация о пользователе:\n-------------------\nНик: {nickame}\nUsername: @{username}\nUserId: {user_id}\n-------------------\nПокупок совершено: {pay_count}\bБаланс покупателя: {balance}\nРефералов приглашено: {db.get_count_refs(int(user_id))}\nСтатус покупателя: {userstatus}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, f'Информация о пользователе:') + f'\n-------------------\n' + translater(call.from_user.id, 'Ник:') + f' {nickame}\n' + translater(call.from_user.id, 'Логин:') + f' @{username}\nUserId: {user_id}\n-------------------\n' + translater(call.from_user.id, 'Покупок совершено:') + f' {pay_count}\b' + translater(call.from_user.id, 'Баланс:') + f' {balance}\n' + translater(call.from_user.id, 'Рефералов приглашено:') + f' {db.get_count_refs(int(user_id))}\n' + translater(call.from_user.id, 'Статус пользователя:') + f' {userstatus}', reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='giveskidka_')
 async def giveskidkacall(call: types.CallbackQuery, state: FSMContext):
@@ -1453,7 +1465,7 @@ async def giveskidkacall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['UserId'] = user_id
     await GiveSkidka.next()
-    await call.message.answer(f'Скидка пользователя {procent}%\nВведите новую скидку:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Скидка пользователя') + f' {procent}%\n' + translater(call.from_user.id, 'Введите новую скидку:'), reply_markup=cancel_mkp(call.from_user.id))
 
 @dp.message_handler(state=GiveSkidka.Skidka)
 async def giveskidkaskidkamsg(message: types.Message, state: FSMContext):
@@ -1462,10 +1474,10 @@ async def giveskidkaskidkamsg(message: types.Message, state: FSMContext):
             pass
         user_id = data['UserId']
         db.updateprocent(int(user_id), int(message.text))
-        await message.answer('Скидка успешно обновлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Скидка успешно обновлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:
-        await message.answer('Введите процент скидки целым числом', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите процент скидки целым числом'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text_contains='sendmsg_')
 async def sendmsgcall(call: types.CallbackQuery, state: FSMContext):
@@ -1474,7 +1486,7 @@ async def sendmsgcall(call: types.CallbackQuery, state: FSMContext):
     await SendMsg.UserId.set()
     async with state.proxy() as data:
         data['UserId'] = user_id
-    await call.message.answer(f'Введите сообщение. Его получит пользователь с ID <code>{user_id}</code>', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите сообщение. Его получит пользователь с ID') + f' <code>{user_id}</code>', reply_markup=cancel_mkp(call.from_user.id))
 
 @dp.message_handler(content_types=['text', 'photo', 'video'], state=SendMsg.UserId)
 async def sendmsguseridmsg(message: types.Message, state: FSMContext):
@@ -1485,7 +1497,7 @@ async def sendmsguseridmsg(message: types.Message, state: FSMContext):
         await bot.copy_message(int(user_id), message.from_user.id, message.message_id)       
     except:
         pass
-    await message.answer('Сообщение отправлено. Введите ещё или нажмите "Отменить"', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Сообщение отправлено. Введите ещё или нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text_contains='givepromo_')
 async def givepromocall(call: types.CallbackQuery, state: FSMContext):
@@ -1494,14 +1506,14 @@ async def givepromocall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['UserId'] = call.data.split('_')[1]
     await GivePromo.next()
-    await call.message.answer('Введите промокод:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите промокод:'), reply_markup=cancel_mkp(call.from_user.id))
 
 @dp.message_handler(state=GivePromo.Promo)
 async def givepromopromomsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['Promo'] = message.text
     await GivePromo.next()
-    await message.answer('Хорошо, введите процент скидки (целым числом)', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Хорошо, введите процент скидки (целым числом)'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.message_handler(state=GivePromo.Procent)
 async def givepromoprocentmsg(message: types.Message, state: FSMContext):
@@ -1511,12 +1523,12 @@ async def givepromoprocentmsg(message: types.Message, state: FSMContext):
         userid = data['UserId']
         promo = data['Promo']
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Да', callback_data='go')
-        btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Да'), callback_data='go')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
         mkp.add(btn1).add(btn2)
-        await message.answer(f'Вы действительно хотите выдать пользователю с ID <code>{userid}</code>\nПромокод: <code>{promo}</code>\nСо скидкой в {message.text}%', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Вы действительно хотите выдать пользователю с ID') + f' <code>{userid}</code>\n' + translater(message.from_user.id, 'Промокод:') + f' <code>{promo}</code>\n' + translater(message.from_user.id, 'Со скидкой в') + f' {message.text}%', reply_markup=mkp)
     else:
-        await message.answer('Введите процент скидки целым числом', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите процент скидки целым числом'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 @dp.callback_query_handler(text='go', state=GivePromo.Procent)
@@ -1529,10 +1541,10 @@ async def givepromoprocentgocall(call: types.CallbackQuery, state: FSMContext):
     procent = data['Procent']
     db.add_promo(promo, int(userid), procent)
     try:
-        await bot.send_message(int(userid), f'Вам был выдан промокод на {procent}% скидку!\nПромокод: <code>{promo}</code>')
+        await bot.send_message(int(userid), translater(call.from_user.id, f'Вам был выдан промокод на') + f' {procent}% ' + translater(call.from_user.id, f'скидку!\nПромокод:') + f' <code>{promo}</code>')
     except:
         pass
-    await call.message.answer('Пользователю успешно выдан промокод! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Пользователю успешно выдан промокод! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 
@@ -1545,7 +1557,7 @@ async def changebalancecall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['UserId'] = user_id
     await ChangeBalance.next()
-    await call.message.answer(f'Баланс пользователя: {balance}\nВведите новый баланс (в рублях):', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Баланс пользователя:') + f' {balance}\n' + translater(call.from_user.id, 'Введите новый баланс (в рублях):'), reply_markup=cancel_mkp(call.from_user.id))
 
 @dp.callback_query_handler(text='cancel', state=ChangeBalance.Balance)
 @dp.callback_query_handler(text='cancel', state=ChangeRef.Ref)
@@ -1555,7 +1567,7 @@ async def changebalancecall(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='cancel', state=SendMsg.UserId)
 async def cancelchangebalance(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChangeBalance.Balance)
@@ -1565,10 +1577,10 @@ async def changebalancebalancemsg(message: types.Message, state: FSMContext):
             pass
         userid = data['UserId']
         db.change_balance(int(userid), message.text)
-        await message.answer('Баланс успешно изменен! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Баланс успешно изменен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:
-        message.answer('Введите новый баланс целым числом!', reply_markup=cancel_adm_mkp())
+        message.answer(translater(message.from_user.id, 'Введите новый баланс целым числом!'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 
@@ -1581,7 +1593,7 @@ async def changepersproccall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['UserId'] = user_id
     await ChangeRef2.next()
-    await call.message.answer(f'Персональный реф. процент юзера: {procent}\nВведите новый процент:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Персональный реф. процент юзера:') + f' {procent}\n' + translater(call.from_user.id, 'Введите новый процент:'), reply_markup=cancel_mkp(call.from_user.id))
 
 @dp.message_handler(state=ChangeRef2.Ref)
 async def changepersprocmsg(message: types.Message, state: FSMContext):
@@ -1591,10 +1603,10 @@ async def changepersprocmsg(message: types.Message, state: FSMContext):
         userid = data['UserId']
         # await message.answer(f'{userid} | {int(message.text)}')
         db.update_personal_procent(int(userid), int(message.text))
-        await message.answer('Персональный реф. процент изменен! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Персональный реф. процент изменен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:
-        message.answer('Введите персональный реф. процент целым числом!', reply_markup=cancel_adm_mkp())
+        message.answer(translater(message.from_user.id, 'Введите персональный реф. процент целым числом!'), reply_markup=cancel_mkp(message.from_user.id))
 
 
 
@@ -1603,9 +1615,9 @@ async def bancall(call: types.CallbackQuery):
     user_id = call.data.split('_')[1]
     await call.message.delete_reply_markup()
     db.ban_user(int(user_id))
-    await call.message.answer('Пользователь заблокирован. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Пользователь заблокирован. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     try:
-        await bot.send_message(int(user_id), 'Вы были заблокированы')
+        await bot.send_message(int(user_id), translater(call.from_user.id, 'Вы были заблокированы'))
     except:
         pass
 
@@ -1614,27 +1626,28 @@ async def banuncall(call: types.CallbackQuery):
     user_id = call.data.split('_')[1]
     await call.message.delete_reply_markup()
     db.unban_user(int(user_id))
-    await call.message.answer('Пользователь разблокирован. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Пользователь разблокирован. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     try:
-        await bot.send_message(int(user_id), 'Вы были разблокированы. Пропишите /start для обновления')
+        await bot.send_message(int(user_id), translater(call.from_user.id, 'Вы были разблокированы. Пропишите /start для обновления'))
     except:
         pass
 
 @dp.message_handler(text='Настройка доставки')
+@dp.message_handler(text='Delivery settings')
 async def deliverysetadminmsg(message: types.Message):
     if message.from_user.id in admins:
-        await message.answer('Варианты доставки', reply_markup=deliveriesadm_mkp())
+        await message.answer(translater(message.from_user.id, 'Варианты доставки'), reply_markup=deliveriesadm_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text='deliveryadd')
 async def deliveryaddcall(call: types.CallbackQuery):
     await call.message.delete()
     check_lan = db.check_lanadd()
     if check_lan[0] == 1 and check_lan[1] == 1:
-        await call.message.answer('Введите название доставки:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название доставки:'), reply_markup=cancel_mkp(call.from_user.id))
     elif check_lan[0] == 1:
-        await call.message.answer('Введите название доставки:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название доставки:'), reply_markup=cancel_mkp(call.from_user.id))
     elif check_lan[1] == 1:
-        await call.message.answer('Введите название доставки на английском:', reply_markup=cancel_adm_mkp())
+        await call.message.answer(translater(call.from_user.id, 'Введите название доставки на английском:'), reply_markup=cancel_mkp(call.from_user.id))
     await DeliveryAdd.Name.set()
 
 @dp.callback_query_handler(text='cancel', state=DeliveryAdd.Name)
@@ -1642,7 +1655,7 @@ async def deliveryaddcall(call: types.CallbackQuery):
 @dp.callback_query_handler(text='cancel', state=DeliveryAdd.Cost)
 async def canceldeliveryaddcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=DeliveryAdd.Name)
@@ -1651,28 +1664,28 @@ async def deliveryaddnamemsg(message: types.Message, state: FSMContext):
     if check_lan[0] == 1 and check_lan[1] == 1:
         async with state.proxy() as data:
             data['Name'] = message.text
-        await message.answer('Введите название на английском:', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите название на английском:'), reply_markup=cancel_mkp(message.from_user.id))
     elif check_lan[0] == 1:
         async with state.proxy() as data:
             data['Name'] = message.text
         await DeliveryAdd.next()
         async with state.proxy() as data:
             data['EngName'] = 'None'
-        await message.answer('Введите стоимость доставки:', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите стоимость доставки:'), reply_markup=cancel_mkp(message.from_user.id))
     elif check_lan[1] == 1:
         async with state.proxy() as data:
             data['Name'] = 'None'
         await DeliveryAdd.next()
         async with state.proxy() as data:
             data['EngName'] = message.text
-        await message.answer('Введите стоимость доставки:', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите стоимость доставки:'), reply_markup=cancel_mkp(message.from_user.id))
     await DeliveryAdd.next()
 
 @dp.message_handler(state=DeliveryAdd.EngName)
 async def deliveryaddengnamemsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['EngName'] = message.text
-    await message.answer('Введите стоимость доставки:', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите стоимость доставки:'), reply_markup=cancel_mkp(message.from_user.id))
     await DeliveryAdd.next()
 
 @dp.message_handler(state=DeliveryAdd.Cost)
@@ -1684,12 +1697,12 @@ async def deliveryaddcostmsg(message: types.Message, state: FSMContext):
         name = data['Name']
         engname = data['EngName']
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton('Да', callback_data='go')
-        btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Да'), callback_data='go')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
         mkp.add(btn1).add(btn2)
-        await message.answer(f'Вы действительно хотите добавить вариант доставки:\n<b>Название</b>: <code>{name}</code>\n<b>На английском</b>: <code>{engname}</code>\n<b>Стоимость</b>: <code>{cost}</code>', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Вы действительно хотите добавить вариант доставки:\n<b>Название</b>:') + f' <code>{name}</code>\n<b>' + translater(message.from_user.id, 'На английском:') + f'</b> <code>{engname}</code>\n<b>' + translater(message.from_user.id, 'Стоимость') + f'</b>: <code>{cost}</code>', reply_markup=mkp)
     except:
-        await message.answer('Введите стоимость доставки целым числом или через точку. Пример: <code>143.55</code>', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите стоимость доставки целым числом или через точку. Пример: <code>143.55</code>'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text='go', state=DeliveryAdd.Cost)
 async def deliveryaddgocall(call: types.CallbackQuery, state: FSMContext):
@@ -1701,7 +1714,7 @@ async def deliveryaddgocall(call: types.CallbackQuery, state: FSMContext):
     currency = db.get_currencysetadm()[0]
     db.add_delivery_adm(name, engname, cost, currency)
     await call.message.delete()
-    await call.message.answer('Доставка успешно добавлена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Доставка успешно добавлена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.callback_query_handler(text_contains='admdeliveryset_')
@@ -1711,17 +1724,17 @@ async def admdeliverysetcall(call: types.CallbackQuery):
     await call.message.delete()
     if delinfo[2] == 'off':
         status = 'Выключена'
-        btn1 = types.InlineKeyboardButton('Включить', callback_data=f'deliveryon_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Включить'), callback_data=f'deliveryon_{deliveryid}')
     elif delinfo[2] == 'on':
         status = 'Включена'
-        btn1 = types.InlineKeyboardButton('Выключить', callback_data=f'deliveryoff_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выключить'), callback_data=f'deliveryoff_{deliveryid}')
     mkp = types.InlineKeyboardMarkup()
-    btn2 = types.InlineKeyboardButton('Изменить название', callback_data=f'deliverychangename_{deliveryid}')
-    btn3 = types.InlineKeyboardButton('Изменить стоимость', callback_data=f'deliverychangecost_{deliveryid}')
-    btn4 = types.InlineKeyboardButton('Удалить доставку', callback_data=f'deliverydelete_{deliveryid}')
-    btn5 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить название'), callback_data=f'deliverychangename_{deliveryid}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить стоимость'), callback_data=f'deliverychangecost_{deliveryid}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить доставку'), callback_data=f'deliverydelete_{deliveryid}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3).add(btn4).add(btn5)
-    await call.message.answer(f'Название: {delinfo[0]}\nСтоимость: {delinfo[1]}\nСтатус: {status}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Название:') + f' {delinfo[0]}\n' + translater(call.from_user.id, 'Стоимость:') + f' {delinfo[1]}\n' + translater(call.from_user.id, 'Статус:') + f' ' + translater(call.from_user.id, f'{status}'),  reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='deliveryon_')
 async def deliveryoncall(call: types.CallbackQuery):
@@ -1731,17 +1744,17 @@ async def deliveryoncall(call: types.CallbackQuery):
     await call.message.delete()
     if delinfo[2] == 'off':
         status = 'Выключена'
-        btn1 = types.InlineKeyboardButton('Включить', callback_data=f'deliveryon_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Включить'), callback_data=f'deliveryon_{deliveryid}')
     elif delinfo[2] == 'on':
         status = 'Включена'
-        btn1 = types.InlineKeyboardButton('Выключить', callback_data=f'deliveryoff_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выключить'), callback_data=f'deliveryoff_{deliveryid}')
     mkp = types.InlineKeyboardMarkup()
-    btn2 = types.InlineKeyboardButton('Изменить название', callback_data=f'deliverychangename_{deliveryid}')
-    btn3 = types.InlineKeyboardButton('Изменить стоимость', callback_data=f'deliverychangecost_{deliveryid}')
-    btn4 = types.InlineKeyboardButton('Удалить доставку', callback_data=f'deliverydelete_{deliveryid}')
-    btn5 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить название'), callback_data=f'deliverychangename_{deliveryid}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить стоимость'), callback_data=f'deliverychangecost_{deliveryid}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить доставку'), callback_data=f'deliverydelete_{deliveryid}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3).add(btn4).add(btn5)
-    await call.message.answer(f'Название: {delinfo[0]}\nСтоимость: {delinfo[1]}\nСтатус: {status}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Название:') + f' {delinfo[0]}\n' + translater(call.from_user.id, 'Стоимость:') + f' {delinfo[1]}\n' + translater(call.from_user.id, 'Статус:') + f' ' + translater(call.from_user.id, f'{status}'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='deliveryoff_')
 async def deliveryoffcall(call: types.CallbackQuery):
@@ -1751,17 +1764,17 @@ async def deliveryoffcall(call: types.CallbackQuery):
     await call.message.delete()
     if delinfo[2] == 'off':
         status = 'Выключена'
-        btn1 = types.InlineKeyboardButton('Включить', callback_data=f'deliveryon_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Включить'), callback_data=f'deliveryon_{deliveryid}')
     elif delinfo[2] == 'on':
         status = 'Включена'
-        btn1 = types.InlineKeyboardButton('Выключить', callback_data=f'deliveryoff_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выключить'), callback_data=f'deliveryoff_{deliveryid}')
     mkp = types.InlineKeyboardMarkup()
-    btn2 = types.InlineKeyboardButton('Изменить название', callback_data=f'deliverychangename_{deliveryid}')
-    btn3 = types.InlineKeyboardButton('Изменить стоимость', callback_data=f'deliverychangecost_{deliveryid}')
-    btn4 = types.InlineKeyboardButton('Удалить доставку', callback_data=f'deliverydelete_{deliveryid}')
-    btn5 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить название'), callback_data=f'deliverychangename_{deliveryid}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Изменить стоимость'), callback_data=f'deliverychangecost_{deliveryid}')
+    btn4 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить доставку'), callback_data=f'deliverydelete_{deliveryid}')
+    btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3).add(btn4).add(btn5)
-    await call.message.answer(f'Название: {delinfo[0]}\nСтоимость: {delinfo[1]}\nСтатус: {status}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Название:') + f' {delinfo[0]}\n' + translater(call.from_user.id, 'Стоимость:') + f' {delinfo[1]}\n' + translater(call.from_user.id, 'Статус:') + f' ' + translater(call.from_user.id, f'{status}'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='deliverychangename_')
 async def deliverychnamecall(call: types.CallbackQuery, state: FSMContext):
@@ -1771,7 +1784,7 @@ async def deliverychnamecall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['DeliveryId'] = deliveryid
     await call.message.delete()
-    await call.message.answer(f'Название доставки: <code>{delinfo[0]}</code>\nВведите новое название', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Название доставки:') + f' <code>{delinfo[0]}</code>\n' + translater(call.from_user.id, 'Введите новое название'), reply_markup=cancel_mkp(call.from_user.id))
     await DeliveryChangeName.next()
 
 @dp.callback_query_handler(text='cancel', state=DeliveryChangeName.Name)
@@ -1779,14 +1792,14 @@ async def deliverychnamecall(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='cancel', state=DeliveryChangeCost.Cost)
 async def canceldelchnamecall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=DeliveryChangeName.Name)
 async def delchnamemsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['Name'] = message.text
-    await message.answer('Введите название доставки на английском:', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Введите название доставки на английском:'), reply_markup=cancel_mkp(message.from_user.id))
     await DeliveryChangeName.next()
 
 @dp.message_handler(state=DeliveryChangeName.EngName)
@@ -1797,22 +1810,22 @@ async def deliverychangenameengname(message: types.Message, state: FSMContext):
     engname = message.text
     deliveryid = data['DeliveryId']
     db.change_delivery_name(int(deliveryid), name, engname)
-    await message.answer('Успешно изменено!')
+    await message.answer(translater(message.from_user.id, 'Успешно изменено!'))
     await state.finish()
     delinfo = db.get_delivery_info(int(deliveryid))
     if delinfo[2] == 'off':
         status = 'Выключена'
-        btn1 = types.InlineKeyboardButton('Включить', callback_data=f'deliveryon_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Включить'), callback_data=f'deliveryon_{deliveryid}')
     elif delinfo[2] == 'on':
         status = 'Включена'
-        btn1 = types.InlineKeyboardButton('Выключить', callback_data=f'deliveryoff_{deliveryid}')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Выключить'), callback_data=f'deliveryoff_{deliveryid}')
     mkp = types.InlineKeyboardMarkup()
-    btn2 = types.InlineKeyboardButton('Изменить название', callback_data=f'deliverychangename_{deliveryid}')
-    btn3 = types.InlineKeyboardButton('Изменить стоимость', callback_data=f'deliverychangecost_{deliveryid}')
-    btn4 = types.InlineKeyboardButton('Удалить доставку', callback_data=f'deliverydelete_{deliveryid}')
-    btn5 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить название'), callback_data=f'deliverychangename_{deliveryid}')
+    btn3 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить стоимость'), callback_data=f'deliverychangecost_{deliveryid}')
+    btn4 = types.InlineKeyboardButton(translater(message.from_user.id, 'Удалить доставку'), callback_data=f'deliverydelete_{deliveryid}')
+    btn5 = types.InlineKeyboardButton(translater(message.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3).add(btn4).add(btn5)
-    await message.answer(f'Название: {delinfo[0]}\nСтоимость: {delinfo[1]}\nСтатус: {status}', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Название:') + f' {delinfo[0]}\n' + translater(message.from_user.id, 'Стоимость:') + f' {delinfo[1]}\n' + translater(message.from_user.id, 'Статус:') + f' ' + translater(message.from_user.id, f'{status}'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='deliverychangecost_')
 async def deliverychangecostcall(call: types.CallbackQuery, state: FSMContext):
@@ -1822,7 +1835,7 @@ async def deliverychangecostcall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['DeliveryId'] = deliveryid
     await call.message.delete()
-    await call.message.answer(f'Старая цена доставки: {delinfo[1]}\nВведите новую', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Старая цена доставки:') + f' {delinfo[1]}\n' + translater(call.from_user.id, 'Введите новую'), reply_markup=cancel_mkp(call.from_user.id))
     await DeliveryChangeCost.next()
 
 @dp.message_handler(state=DeliveryChangeCost.Cost)
@@ -1833,24 +1846,24 @@ async def delchcostmsg(message: types.Message, state: FSMContext):
             pass
         deliveryid = data['DeliveryId']
         db.change_delivery_cost(int(deliveryid), str(cost))
-        await message.answer('Цена успешно изменена!')
+        await message.answer(translater(message.from_user.id, 'Цена успешно изменена!'))
         await state.finish()
         delinfo = db.get_delivery_info(int(deliveryid))
         if delinfo[2] == 'off':
             status = 'Выключена'
-            btn1 = types.InlineKeyboardButton('Включить', callback_data=f'deliveryon_{deliveryid}')
+            btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Включить'), callback_data=f'deliveryon_{deliveryid}')
         elif delinfo[2] == 'on':
             status = 'Включена'
-            btn1 = types.InlineKeyboardButton('Выключить', callback_data=f'deliveryoff_{deliveryid}')
+            btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Выключить'), callback_data=f'deliveryoff_{deliveryid}')
         mkp = types.InlineKeyboardMarkup()
-        btn2 = types.InlineKeyboardButton('Изменить название', callback_data=f'deliverychangename_{deliveryid}')
-        btn3 = types.InlineKeyboardButton('Изменить стоимость', callback_data=f'deliverychangecost_{deliveryid}')
-        btn4 = types.InlineKeyboardButton('Удалить доставку', callback_data=f'deliverydelete_{deliveryid}')
-        btn5 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить название'), callback_data=f'deliverychangename_{deliveryid}')
+        btn3 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить стоимость'), callback_data=f'deliverychangecost_{deliveryid}')
+        btn4 = types.InlineKeyboardButton(translater(message.from_user.id, 'Удалить доставку'), callback_data=f'deliverydelete_{deliveryid}')
+        btn5 = types.InlineKeyboardButton(translater(message.from_user.id, 'Админ-панель'), callback_data='admin')
         mkp.add(btn1).add(btn2).add(btn3).add(btn4).add(btn5)
-        await message.answer(f'Название: {delinfo[0]}\nСтоимость: {delinfo[1]}\nСтатус: {status}', reply_markup=mkp)
+        await message.answer(translater(message.from_user.id, 'Название:') + f' {delinfo[0]}\n' + translater(message.from_user.id, 'Стоимость:') + f' {delinfo[1]}\n' + translater(message.from_user.id, 'Статус:') + f' ' + translater(message.from_user.id, f'{status}'), reply_markup=mkp)
     except:
-        await message.answer('Введите новую цену целым числом или через точку. Пример: <code>145.31</code>', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите новую цену целым числом или через точку. Пример: <code>145.31</code>'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text_contains='deliverydelete_')
 async def deliverydeletecall(call: types.CallbackQuery):
@@ -1858,20 +1871,21 @@ async def deliverydeletecall(call: types.CallbackQuery):
     await call.message.delete()
     delinfo = db.get_delivery_info(int(deliveryid))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Удалить', callback_data=f'deliverydeletee_{deliveryid}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data=f'admdeliveryset_{deliveryid}')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Удалить'), callback_data=f'deliverydeletee_{deliveryid}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data=f'admdeliveryset_{deliveryid}')
     mkp.add(btn1).add(btn2)
-    await call.message.answer(f'Вы действительно хотите удалить способ доставки "{delinfo[0]}"', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите удалить способ доставки') + f' "{delinfo[0]}"', reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='deliverydeletee_')
 async def deliverydeleteecall(call: types.CallbackQuery):
     deliveryid = call.data.split('_')[1]
     db.del_delivery(int(deliveryid))
     await call.message.delete()
-    await call.message.answer('Доставка успешно удалена! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Доставка успешно удалена! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.message_handler(text='Платежные системы')
+@dp.message_handler(text='Payment systems')
 async def platezhsistemmsg(message: types.Message):
     qiwistat = db.get_qiwi_stat()
     cryptostat = db.get_crypto_stat()
@@ -1890,10 +1904,10 @@ async def platezhsistemmsg(message: types.Message):
         btn3 = types.InlineKeyboardButton('✅ YOOMONEY', callback_data='changepaym_yoomoney')
     else:
         btn3 = types.InlineKeyboardButton('❌ YOOMONEY', callback_data='changepaym_yoomoney')
-    btn4 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn4 = types.InlineKeyboardButton(translater(message.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(types.InlineKeyboardButton('QIWI', callback_data='getpaym_qiwi')).add(types.InlineKeyboardButton('CRYPTO', callback_data='getpaym_crypto')).add(types.InlineKeyboardButton('YOOMONEY', callback_data='getpaym_yoomoney')).add(btn4)
     # mkp.add(btn1).add(types.InlineKeyboardButton('Токен Qiwi', callback_data='changetoken_QIWI')).add(btn2).add(types.InlineKeyboardButton('Токен Crypto', callback_data='changetoken_CRYPTO')).add(btn3).add(types.InlineKeyboardButton('Токен Yoomoney', callback_data='changetoken_YOOMONEY')).add(btn4)
-    await message.answer('Платежные системы:', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Платежные системы:'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='getpaym_')
 async def getpaymcall(call: types.CallbackQuery):
@@ -1911,24 +1925,24 @@ async def getpaymcall(call: types.CallbackQuery):
             btn1 = types.InlineKeyboardButton('✅ QIWI', callback_data='changepaym_qiwi')
         else:
             btn1 = types.InlineKeyboardButton('❌ QIWI', callback_data='changepaym_qiwi')
-        btn2 = types.InlineKeyboardButton('Токен Qiwi', callback_data='changetoken_QIWI')
+        btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Токен') + ' Qiwi', callback_data='changetoken_QIWI')
     elif paym == 'crypto':
         if cryptostat == 'on':
             btn1 = types.InlineKeyboardButton('✅ CRYPTO', callback_data='changepaym_crypto')
         else:
             btn1 = types.InlineKeyboardButton('❌ CRYPTO', callback_data='changepaym_crypto')
-        btn2 = types.InlineKeyboardButton('Токен Crypto', callback_data='changetoken_CRYPTO')
+        btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Токен') + ' Crypto', callback_data='changetoken_CRYPTO')
     elif paym == 'yoomoney':
         if yoomoneystat == 'on':
             btn1 = types.InlineKeyboardButton('✅ YOOMONEY', callback_data='changepaym_yoomoney')
         else:
             btn1 = types.InlineKeyboardButton('❌ YOOMONEY', callback_data='changepaym_yoomoney')
-        btn2 = types.InlineKeyboardButton('Токен Yoomoney', callback_data='changetoken_YOOMONEY')
-    btn3 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+        btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Токен') + ' Yoomoney', callback_data='changetoken_YOOMONEY')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp = types.InlineKeyboardMarkup()
     mkp.add(btn1).add(btn2).add(btn3)
     await call.message.delete()
-    await call.message.answer('Выберите действие:', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Выберите действие:'), reply_markup=mkp)
 
 
 
@@ -1963,7 +1977,7 @@ async def changepaymcall(call: types.CallbackQuery):
         else:
             btn1 = types.InlineKeyboardButton('❌ YOOMONEY', callback_data='changepaym_yoomoney')
         btn2 = types.InlineKeyboardButton('Токен Yoomoney', callback_data='changetoken_YOOMONEY')
-    btn3 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp = types.InlineKeyboardMarkup().add(btn1).add(btn2).add(btn3)
     await call.message.edit_reply_markup(mkp)
 
@@ -1972,7 +1986,7 @@ async def changepaymcall(call: types.CallbackQuery):
 async def changetokencall(call: types.CallbackQuery, state: FSMContext):
     paym = call.data.split('_')[1]
     await call.message.delete()
-    await call.message.answer(f'Введите новый токен для {paym}:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите новый токен для') + f' {paym}:', reply_markup=cancel_mkp(call.from_user.id))
     await ChangeToken.Paym.set()
     async with state.proxy() as data:
         data['Paym'] = paym
@@ -1984,15 +1998,15 @@ async def changetokentokenmsg(message: types.Message, state: FSMContext):
         data['Token'] = message.text
     paym = data['Paym']
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Да', callback_data='go')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Да'), callback_data='go')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
-    await message.answer(f'Вы действительно хотите изменить токен {paym} на <code>{message.text}</code>', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Вы действительно хотите изменить токен') + f' {paym} ' + translater(message.from_user.id, 'на') + f' <code>{message.text}</code>', reply_markup=mkp)
 
 @dp.callback_query_handler(text='cancel', state=ChangeToken.Token)
 async def changetokencancel(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.callback_query_handler(text='go', state=ChangeToken.Token)
@@ -2003,14 +2017,15 @@ async def changetokengocall(call: types.CallbackQuery, state: FSMContext):
     paym = data['Paym']
     token = data['Token']
     db.changetoken(paym, token)
-    await call.message.answer('Токен успешно изменен. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Токен успешно изменен. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 
 @dp.message_handler(text='Заявки на вывод')
+@dp.message_handler(text='Requests for withdrawal')
 async def withdrawsadm(message: types.Message, state: FSMContext):
     if message.from_user.id in admins:
-        await message.answer('Список заявок на вывод:', reply_markup=withdraws_mkp())
+        await message.answer(translater(message.from_user.id, 'Список заявок на вывод:'), reply_markup=withdraws_mkp(message.from_user.id))
 
 @dp.callback_query_handler(text_contains='withdr_')
 async def withdrcall(call: types.CallbackQuery):
@@ -2018,11 +2033,11 @@ async def withdrcall(call: types.CallbackQuery):
     await call.message.delete()
     with_info = db.get_withdraw(int(with_id))
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Выплачено', callback_data=f'withok_{with_id}')
-    btn2 = types.InlineKeyboardButton('Отказано', callback_data=f'withno_{with_id}')
-    btn3 = types.InlineKeyboardButton('Админ-панель', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Выплачено'), callback_data=f'withok_{with_id}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отказано'), callback_data=f'withno_{with_id}')
+    btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3)
-    await call.message.answer(f'Пользователь ID: {with_info[0]}\nСумма: {with_info[1]}\nРеквизиты: {with_info[2]}', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'ID пользователя:') + f' {with_info[0]}\n' + translater(call.from_user.id, 'Сумма:') + f' {with_info[1]}\n' + translater(call.from_user.id, 'Реквизиты:') + f' {with_info[2]}', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='withok_')
@@ -2031,11 +2046,11 @@ async def withokcall(call: types.CallbackQuery):
     with_info = db.get_withdraw(int(with_id))
     db.with_del(int(with_id))
     try:
-        await bot.send_message(int(with_info[0]), 'Ваша заявка на выплату успешно выплачена!')
+        await bot.send_message(int(with_info[0]), translater(call.from_user.id, 'Ваша заявка на выплату успешно выплачена!'))
     except:
         pass
     await call.message.delete()
-    await call.message.answer('Пользователь получил уведомление! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Пользователь получил уведомление! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.callback_query_handler(text_contains='withno_')
@@ -2045,49 +2060,52 @@ async def withokcall(call: types.CallbackQuery):
     db.with_del(with_id)
     db.add_balance(int(with_info[0]), float(with_info[1]))
     try:
-        await bot.send_message(int(with_info[0]), 'Ваша заявка на выплату отклонена!')
+        await bot.send_message(int(with_info[0]), translater(call.from_user.id, 'Ваша заявка на выплату отклонена!'))
     except:
         pass
     await call.message.delete()
-    await call.message.answer('Пользователь получил уведомление! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Пользователь получил уведомление! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 
 @dp.message_handler(text='Настройки бота')
+@dp.message_handler(text='Bot settings')
 async def botsettingsmsg(message: types.Message):
     if message.from_user.id in admins:
-        await message.answer('Вы перешли в настройки бота', reply_markup=botsettings_mkp())
+        await message.answer(translater(message.from_user.id, 'Вы перешли в настройки бота'), reply_markup=botsettings_mkp(message.from_user.id))
 
 @dp.message_handler(text='Изменить правила')
+@dp.message_handler(text='Change rules')
 async def changerulesmsg(message: types.Message):
     if message.from_user.id in admins:
-        await message.answer('Текущие правила:')
+        await message.answer(translater(message.from_user.id, 'Текущие правила:'))
         await message.answer(db.get_rules())
-        await message.answer('Введите новый правила:', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите новый правила:'), reply_markup=cancel_mkp(message.from_user.id))
         await ChangeRules.Rules.set()
 
 
 @dp.callback_query_handler(text='cancel', state=ChangeRules.Rules)
 async def cancelchangerulescall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChangeRules.Rules)
 async def changerulesrulesmsg(message: types.Message, state: FSMContext):
     db.changerules(message.text)
-    await message.answer('Правила успешно обновлены! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Правила успешно обновлены! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 @dp.message_handler(text='Изменить токен бота')
+@dp.message_handler(text='Change bot token')
 async def changetokebotadm(message: types.Message):
     if message.from_user.id in admins:
-        await message.answer('Введите новый токен бота. Внимание, если вы введете некорректный токен - бот сломается', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите новый токен бота. Внимание, если вы введете некорректный токен - бот сломается'), reply_markup=cancel_mkp(message.from_user.id))
         await ChangeToken.Token.set()
 
 @dp.callback_query_handler(text='cancel', state=ChangeToken.Token)
 async def cancelchangetokencall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChangeToken.Token)
@@ -2095,10 +2113,10 @@ async def changetokentokenmsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['Token'] = message.text
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Да', callback_data='go')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Да'), callback_data='go')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data='cancel')
     mkp.add(btn1).add(btn2)
-    await message.answer(f'Вы действительно хотите изменить токен бота на <code>{message.text}</code>', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Вы действительно хотите изменить токен бота на') + f' <code>{message.text}</code>', reply_markup=mkp)
 
 @dp.callback_query_handler(text='go', state=ChangeToken.Token)
 async def changetokengocall(call: types.CallbackQuery, state: FSMContext):
@@ -2108,19 +2126,20 @@ async def changetokengocall(call: types.CallbackQuery, state: FSMContext):
         pass
     token = data['Token']
     db.change_bottoken(token)
-    await call.message.answer('Токен изменен! Перезапустите бота для применения изменений', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Токен изменен! Перезапустите бота для применения изменений'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(text='Плата за отзыв')
+@dp.message_handler(text='Review fee')
 async def platazaotzivpy(message: types.Message):
     reviewpay = db.get_reviewpay()
-    await message.answer(f'Сейчас мы платим {reviewpay} руб за отзыв. Введите новое число или нажмите "Отменить"', reply_markup=cancel_adm_mkp())
+    await message.answer(translater(message.from_user.id, 'Сейчас мы платим') + f' {reviewpay} ' + translater(message.from_user.id, 'руб за отзыв. Введите новое число или нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
     await ChangeReviewPay.Pay.set()
 
 @dp.callback_query_handler(text='cancel', state=ChangeReviewPay.Pay)
 async def changereviewpaycancelcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChangeReviewPay.Pay)
@@ -2129,15 +2148,16 @@ async def changereviewpaypaymsg(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['Pay'] = message.text
         db.change_reviewpay(message.text)
-        await message.answer('Успешно изменено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+        await message.answer(translater(message.from_user.id, 'Успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:
-        await message.answer('Введите сумму, которую будем платить пользователю за отзыв целым числом:', reply_markup=cancel_adm_mkp())
+        await message.answer(translater(message.from_user.id, 'Введите сумму, которую будем платить пользователю за отзыв целым числом:'), reply_markup=cancel_mkp(message.from_user.id))
 
 @dp.message_handler(text='Настройка языка')
+@dp.message_handler(text='Language setting')
 async def lansetadm(message: types.Message):
     if message.from_user.id in admins:
-        await message.answer('Настройки языка:', reply_markup=lan_settingmkp())
+        await message.answer(translater(message.from_user.id, 'Настройки языка:'), reply_markup=lan_settingmkp(message.from_user.id))
 
 @dp.callback_query_handler(text_contains='setlanset_')
 async def setlansetcall(call: types.CallbackQuery):
@@ -2146,14 +2166,14 @@ async def setlansetcall(call: types.CallbackQuery):
         db.changestatlan_ru()
     elif lan == 'en':
         db.changestatlan_en()
-    await call.message.edit_reply_markup(lan_settingmkp())
+    await call.message.edit_reply_markup(lan_settingmkp(call.from_user.id))
 
 
 @dp.callback_query_handler(text_contains='changenockname_')
 async def changenocknamecall(call: types.CallbackQuery, state: FSMContext):
     user_id = call.data.split('_')[1]
     await call.message.delete()
-    await call.message.answer('Введите новый никнейм:', reply_markup=cancel_adm_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Введите новый никнейм:'), reply_markup=cancel_mkp(call.from_user.id))
     await ChageNicknameAdm.UserId.set()
     async with state.proxy() as data:
         data['UserId'] = user_id
@@ -2162,7 +2182,7 @@ async def changenocknamecall(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='cancel', state=ChageNicknameAdm.Nickname)
 async def cancelchangenicknameadm(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer('Отменено. Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Отменено. Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()
 
 @dp.message_handler(state=ChageNicknameAdm.Nickname)
@@ -2171,7 +2191,7 @@ async def changenicknameadmmsg(message: types.Message, state: FSMContext):
         pass
     user_id = data['UserId']
     db.update_usernamerev(message.text, int(user_id))
-    await message.answer('Никнейм успешно изменен! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await message.answer(translater(message.from_user.id, 'Никнейм успешно изменен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
 
@@ -2181,26 +2201,27 @@ async def oblylrefzarcall(call: types.CallbackQuery):
     user_id = call.data.split('_')[1]
     await call.message.delete()
     mkp = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton('Да', callback_data=f'obnylrefzarr_{user_id}')
-    btn2 = types.InlineKeyboardButton('Отменить', callback_data='admin')
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Да'), callback_data=f'obnylrefzarr_{user_id}')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='admin')
     mkp.add(btn1).add(btn2)
-    await call.message.answer('Вы действительно хотите обнулить заработок реф?', reply_markup=mkp)
+    await call.message.answer(translater(call.from_user.id, 'Вы действительно хотите обнулить заработок реф?'), reply_markup=mkp)
 
 @dp.callback_query_handler(text_contains='obnylrefzarr_')
 async def obnylrefzarrcall(call: types.CallbackQuery):
     user_id = call.data.split('_')[1]
     await call.message.delete()
     db.obnyl_refbal(int(user_id))
-    await call.message.answer('Успешно обнулено! Вы были возвращены в админ-панель', reply_markup=admin_mkp())
+    await call.message.answer(translater(call.from_user.id, 'Успешно обнулено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
 
 @dp.message_handler(commands='resetprice')
 async def resetpricecmd(message: types.Message):
     if message.from_user.id in admins:
         db.update_pricesgood()
-        await message.answer('Цены обновлены')
+        await message.answer(translater(message.from_user.id, 'Цены обновлены'))
 
 
 @dp.message_handler(text='Настройка валют')
+@dp.message_handler(text='Currency settings')
 async def setvalut(message: types.Message):
     if message.from_user.id in admins:
         currencyinfo = db.get_currencysetadm()[0]
@@ -2217,8 +2238,8 @@ async def setvalut(message: types.Message):
             btn3 = types.InlineKeyboardButton('✅ EUR', callback_data='none')
         else:
             btn3 = types.InlineKeyboardButton('❌ EUR', callback_data='currencyon_eur')
-        mkp.add(btn1).add(btn2).add(btn3).add(types.InlineKeyboardButton('Админ-панель', callback_data='admin'))
-        await message.answer('Настройки валют:', reply_markup=mkp)
+        mkp.add(btn1).add(btn2).add(btn3).add(types.InlineKeyboardButton(translater(message.from_user.id, 'Админ-панель'), callback_data='admin'))
+        await message.answer(translater(message.from_user.id, 'Настройки валют:'), reply_markup=mkp)
         
 @dp.callback_query_handler(text_contains='currencyon_')
 async def currencyoncall(call: types.CallbackQuery):
@@ -2238,5 +2259,5 @@ async def currencyoncall(call: types.CallbackQuery):
         btn3 = types.InlineKeyboardButton('✅ EUR', callback_data='none')
     else:
         btn3 = types.InlineKeyboardButton('❌ EUR', callback_data='currencyon_eur')
-    mkp.add(btn1).add(btn2).add(btn3).add(types.InlineKeyboardButton('Админ-панель', callback_data='admin'))
+    mkp.add(btn1).add(btn2).add(btn3).add(types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin'))
     await call.message.edit_reply_markup(mkp)

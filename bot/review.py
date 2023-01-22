@@ -1,4 +1,4 @@
-from config import dp, db, bot, admins, feedback_channel_id
+from config import dp, db, bot, admins, feedback_channel_id, languageForFeedback
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from states import ReviewTake
@@ -46,7 +46,7 @@ async def reviewtakereviewmsg(message: types.Message, state: FSMContext):
         stars = data['Stars']
         a = db.get_order_info(int(order_id))[0]
         b = pickle.loads(a)
-        text = f'Заказ №{order_id}\nТовар:\n'
+        text = translater(message.from_user.id, 'Заказ') + f' №{order_id}\n' + translater(message.from_user.id, 'Товар:\n')
         for i in b:
             try:
                 a = float(i)
@@ -58,20 +58,26 @@ async def reviewtakereviewmsg(message: types.Message, state: FSMContext):
         if db.get_usernamerev(message.from_user.id):
             a = db.get_usernamerev(message.from_user.id)
             b = f'{a[:2]}***{a[-2:]}'
-            await bot.send_message(feedback_channel_id, f'{text}<b>Пользователь</b>: {b}\n<b>Оценка</b>: {stars_list[int(stars)]}\n<b>Категория</b>: {res[0]}\n<b>Отзыв</b>: {message.text}')
+            if languageForFeedback == "en":
+                await bot.send_message(feedback_channel_id, f'{text}<b>User</b>: {b}\n<b>Rate</b>: {stars_list[int(stars)]}\n<b>Category</b>: {res[0]}\n<b>Feedback</b>: {message.text}')
+            else:
+                await bot.send_message(feedback_channel_id, f'{text}<b>Пользователь</b>: {b}\n<b>Оценка</b>: {stars_list[int(stars)]}\n<b>Категория</b>: {res[0]}\n<b>Отзыв</b>: {message.text}')
         else:
-            await bot.send_message(feedback_channel_id, f'{text}<b>Пользователь</b>: {message.from_user.first_name}\n<b>Оценка</b>: {stars_list[int(stars)]}\n<b>Категория</b>: {res[0]}\n<b>Отзыв</b>: {message.text}')
+            if languageForFeedback == "en":
+                await bot.send_message(feedback_channel_id, f'{text}<b>User</b>: {message.from_user.first_name}\n<b>Rate</b>: {stars_list[int(stars)]}\n<b>Category</b>: {res[0]}\n<b>Feedback</b>: {message.text}')
+            else:
+                await bot.send_message(feedback_channel_id, f'{text}<b>Пользователь</b>: {message.from_user.first_name}\n<b>Оценка</b>: {stars_list[int(stars)]}\n<b>Категория</b>: {res[0]}\n<b>Отзыв</b>: {message.text}')
         reviewpay = db.get_reviewpay()
         if int(reviewpay) == 0:
             pass
         else:
             db.add_balance(message.from_user.id, float(reviewpay))
-            await message.answer(f'Вам на баланс было начислено {reviewpay} руб за отзыв!')
+            await message.answer(translater(message.from_user.id, f'Вам на баланс было начислено') + f' {reviewpay} ' + translater(message.from_user.id, 'руб за отзыв!'))
     except Exception as ex:
         print(ex)
         for admin in admins:
             try:
-                await bot.send_message(admin, 'Произошла ошибка при отправлении отзыва в канал')
+                await bot.send_message(admin, translater(message.from_user.id, 'Произошла ошибка при отправлении отзыва в канал'))
             except:
                 pass
     await message.answer(translater(message.from_user.id, 'Спасибо. Вы были возвращены в меню'), reply_markup=menu_mkp(message.from_user.id))
