@@ -1,3 +1,4 @@
+import json
 from config import dp, admins, db, bot
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -548,7 +549,7 @@ async def changenamesubcatengmsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         pass
     subcatid = data['SubcatId']
-    db.changename_subcat(int(subcatid, 'None', message.text))
+    db.changename_subcat(int(subcatid), 'None', message.text)
     await message.answer(translater(message.from_user.id, 'Название подкатегории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
@@ -569,7 +570,7 @@ async def changenamesubncatsubcatnamemsg(message: types.Message, state: FSMConte
         pass
     subcatid = data['SubcatId']
     subcatname = data['SubcatName']
-    db.changename_subcat(int(subcatid, subcatname, message.text))
+    db.changename_subcat(int(subcatid), subcatname, message.text)
     await message.answer(translater(message.from_user.id, 'Название подкатегории успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
     await state.finish()
 
@@ -752,11 +753,11 @@ async def addgoodprice(message: types.Message, state: FSMContext):
         description = data['Description']
         engdesc = data['EngDescription']
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Пропустить'), callback_data='add')
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Добавить'), callback_data='add')
         btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
         mkp.add(btn1).add(btn2)
         if name != 'None' and engname != 'None':
-            await message.answer(f'Name: {engname}\nDescription: {engdesc}')
+            # await message.answer(f'Name: {engname}\nDescription: {engdesc}')
             if data['Photo'] == 'None':
                 await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
             else:
@@ -1101,19 +1102,24 @@ async def orderadmincall(call: types.CallbackQuery):
     adress = order_info[1]
     comment = order_info[2]
     photo = order_info[3]
+    catAndSudcatDict = json.loads(order_info[4])
     user_id = db.get_order_userid(int(order_id))
     usernamerev = db.get_usernamerev(int(user_id))
     username = db.get_username(int(user_id))
 
     text = f'{usernamerev} / {user_id} / {username}\n'
-    step = 1
-    for a in tovars:
-        try:
-            text=f'{text}Сумма: {round(float(a), 2)}\n'
-        except:
-            text=f'{text}{step}.{a}\n'
-        step=step+1
-    text=f'{text}\n{adress}\n' + translater(call.from_user.id, 'Комментарий:') + f' <code>{comment}</code>'
+
+    for i in catAndSudcatDict:
+        text += f'{i}\n'
+        for j in catAndSudcatDict[i]:
+            text += f'     {j}\n'
+            num = 1
+            for k in catAndSudcatDict[i][j]:
+                text += f'          {num}) {db.get_good_info(k, call.from_user.id)[0]}\n'
+                num += 1
+
+    text += f'Сумма: {round(float(tovars[-1]), 2)}\n'
+    text += f'\n{adress}\n' + translater(call.from_user.id, 'Комментарий:') + f' <code>{comment}</code>'
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Подтвердить'), callback_data=f'orderok_{order_id}')
     btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отклонить'), callback_data=f'orderno_{order_id}')

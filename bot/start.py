@@ -26,11 +26,19 @@ async def startcmd(message: types.Message):
     elif stat == 'ok':
         await message.answer(translater(message.from_user.id, 'Вы в меню'), reply_markup=menu_mkp(message.from_user.id))
     else:
+        engChoices = {
+                "яблоко": "apple",
+                "автомобиль": "car",
+                "собаку": "dog",
+                "дерево": "tree",
+                "радугу": "rainbow",
+                "банан": "banana",
+        }
         captcha = Captcha()
         captcha.register_handlers(dp)
         
         await message.answer(
-            captcha.get_caption(),
+            captcha.get_caption(engChoices),
             reply_markup=captcha.get_captcha_keyboard()
         )
         

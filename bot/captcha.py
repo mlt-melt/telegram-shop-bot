@@ -24,6 +24,7 @@ class Captcha:
     #       captcha = Captcha()
     #       ...
 
+    
     def __init__(self, choices: Dict[str, str] = None) -> None:
         if choices and isinstance(choices, dict):
             self.choices = choices
@@ -60,8 +61,8 @@ class Captcha:
 
         return captcha_keyboard
 
-    def get_caption(self) -> str:
-        return f"Чтобы получить доступ к боту, нажмите на {self.correct_choice}"
+    def get_caption(self, engChoices) -> str:
+        return f"Чтобы получить доступ к боту, нажмите на <b>{self.correct_choice}</b>\nTo access the bot, click on <b>{engChoices[self.correct_choice]}</b>"
 
     async def captcha_choice_handler(
         self,
@@ -82,7 +83,7 @@ class Captcha:
         Captcha.passed_captcha_users.add(callback_query.from_user.id)
 
         await callback_query.message.edit_text(
-            "Капча пройдена. Вам был предоставлен доступ к боту", reply_markup=None
+            "Капча пройдена. Вам был предоставлен доступ к боту\nThe captcha is passed. You have been granted access to the bot", reply_markup=None
         )
         await callback_query.message.answer(db.get_rules(), reply_markup=rules_mkp(callback_query.from_user.id))
 

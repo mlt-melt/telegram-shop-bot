@@ -260,9 +260,38 @@ async def paycryptocall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    async with state.proxy() as data:
+    try:
+        async with state.proxy() as data:
             promocode = data['Promocode']
-    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
+    except:
+        promocode = None
+    catIdList = []
+    subcatIdList = []
+    goodsCatIdList = []
+    goodsSubcatIdList = []
+    
+    for i in box:
+        tovarInfoDict = db.get_good_cat_and_subcat(i[0], call.from_user.id)
+        catId = tovarInfoDict['catid']
+        subcatId = tovarInfoDict['subcatid']
+        if catId not in catIdList:
+            catIdList.append(catId)
+        if subcatId not in subcatIdList:
+            subcatIdList.append(subcatId)
+        goodsCatIdList.append([i[0], catId])
+        goodsSubcatIdList.append([i[0], subcatId])
+
+    finalDict = {}
+    for i in catIdList:
+        for j in subcatIdList:
+            subcatgoodsList = []
+            for m in goodsSubcatIdList:
+                if m[1] == j:
+                    subcatgoodsList.append(m[0])
+            if db.get_cat_id_by_subcat_id(j) == i:
+                finalDict[i][j] = subcatgoodsList
+    
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode, finalDict)
     mkp = types.InlineKeyboardMarkup(row_width=4)
     for coin in coins:
         mkp.insert(types.InlineKeyboardButton(coin, callback_data=f'crypto_{coin}_{order_id}_{price}'))
@@ -302,7 +331,7 @@ async def cryptocall(call: types.CallbackQuery):
                     db.del_promo(int(order_id), int(call.from_user.id))
                     for admin in admins:
                         try:
-                            await bot.send_message(admin, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель')
+                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
                         except:
                             pass
                     ref = db.get_referal(call.from_user.id)
@@ -342,7 +371,7 @@ async def cryptocheckcall(call: types.CallbackQuery):
             db.del_promo(int(order_id), int(call.from_user.id))
             for admin in admins:
                 try:
-                    await bot.send_message(admin, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель')
+                    await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
                 except:
                     pass
             ref = db.get_referal(call.from_user.id)
@@ -404,16 +433,51 @@ async def paybalancecall(call: types.CallbackQuery, state: FSMContext):
         await call.message.delete()
         db.pay_balance(call.from_user.id, price)
         await call.message.answer(translater(call.from_user.id, 'Деньги списаны с баланса. Заказ оплачен, менеджер получил уведомление.'), reply_markup=menu_mkp(call.from_user.id))
-        async with state.proxy() as data:
-            promocode = data['Promocode']
-        order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
+        
+        try:
+            async with state.proxy() as data:
+                promocode = data['Promocode']
+        except:
+            promocode = None
+        catIdList = []
+        subcatIdList = []
+        goodsCatIdList = []
+        goodsSubcatIdList = []
+        
+        for i in box:
+            tovarInfoDict = db.get_good_cat_and_subcat(i[0], call.from_user.id)
+            catId = tovarInfoDict['catid']
+            subcatId = tovarInfoDict['subcatid']
+            if catId not in catIdList:
+                catIdList.append(catId)
+            if subcatId not in subcatIdList:
+                subcatIdList.append(subcatId)
+            goodsCatIdList.append([i[0], catId])
+            goodsSubcatIdList.append([i[0], subcatId])
+
+        finalDict = {}
+        for i in catIdList:
+            iName = db.get_catOrSubcat_name(i, "cat", call.from_user.id)
+            finalDict[iName] = {}
+            for j in subcatIdList:
+                jName = db.get_catOrSubcat_name(j, "subcat", call.from_user.id)
+                subcatgoodsList = []
+                for m in goodsSubcatIdList:
+                    if m[1] == j:
+                        subcatgoodsList.append(m[0])
+                if db.get_cat_id_by_subcat_id(j) == i:
+                    finalDict[iName][jName] = subcatgoodsList
+
+
+        order_id = db.add_order(call.from_user.id, order, adress, comment, promocode, finalDict)
+
         db.boxlclear(call.from_user.id)
         # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
         db.pay_order(int(order_id))
         db.del_promo(int(order_id), int(call.from_user.id))
         for admin in admins:
             try:
-                await bot.send_message(admin, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель')
+                await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
             except:
                 pass
         ref = db.get_referal(call.from_user.id)
@@ -459,9 +523,38 @@ async def payyoomoneycall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    async with state.proxy() as data:
+    try:
+        async with state.proxy() as data:
             promocode = data['Promocode']
-    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
+    except:
+        promocode = None
+    catIdList = []
+    subcatIdList = []
+    goodsCatIdList = []
+    goodsSubcatIdList = []
+    
+    for i in box:
+        tovarInfoDict = db.get_good_cat_and_subcat(i[0], call.from_user.id)
+        catId = tovarInfoDict['catid']
+        subcatId = tovarInfoDict['subcatid']
+        if catId not in catIdList:
+            catIdList.append(catId)
+        if subcatId not in subcatIdList:
+            subcatIdList.append(subcatId)
+        goodsCatIdList.append([i[0], catId])
+        goodsSubcatIdList.append([i[0], subcatId])
+
+    finalDict = {}
+    for i in catIdList:
+        for j in subcatIdList:
+            subcatgoodsList = []
+            for m in goodsSubcatIdList:
+                if m[1] == j:
+                    subcatgoodsList.append(m[0])
+            if db.get_cat_id_by_subcat_id(j) == i:
+                finalDict[i][j] = subcatgoodsList
+    
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode, finalDict)
     paylink = create_pay(price, call.from_user.id, order_id)
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Оплатить'), url=paylink)
@@ -501,9 +594,38 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
     adress = translater(call.from_user.id, 'Способ доставки')+f': {delinfo[0]}\n'+translater(call.from_user.id, 'Адрес')+f': {adress}'
     comment = data['Comment']
     order.append(price)
-    async with state.proxy() as data:
+    try:
+        async with state.proxy() as data:
             promocode = data['Promocode']
-    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode)
+    except:
+        promocode = None
+    catIdList = []
+    subcatIdList = []
+    goodsCatIdList = []
+    goodsSubcatIdList = []
+    
+    for i in box:
+        tovarInfoDict = db.get_good_cat_and_subcat(i[0], call.from_user.id)
+        catId = tovarInfoDict['catid']
+        subcatId = tovarInfoDict['subcatid']
+        if catId not in catIdList:
+            catIdList.append(catId)
+        if subcatId not in subcatIdList:
+            subcatIdList.append(subcatId)
+        goodsCatIdList.append([i[0], catId])
+        goodsSubcatIdList.append([i[0], subcatId])
+
+    finalDict = {}
+    for i in catIdList:
+        for j in subcatIdList:
+            subcatgoodsList = []
+            for m in goodsSubcatIdList:
+                if m[1] == j:
+                    subcatgoodsList.append(m[0])
+            if db.get_cat_id_by_subcat_id(j) == i:
+                finalDict[i][j] = subcatgoodsList
+    
+    order_id = db.add_order(call.from_user.id, order, adress, comment, promocode, finalDict)
     paylink = get_payment(call.from_user.id, order_id, price)
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Оплатить'), url=paylink)
@@ -529,7 +651,7 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
                     db.del_promo(int(order_id), int(call.from_user.id))
                     for admin in admins:
                         try:
-                            await bot.send_message(admin, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель')
+                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
                         except:
                             pass
                     ref = db.get_referal(call.from_user.id)
@@ -562,7 +684,7 @@ async def checkpayyoomcall(call: types.CallbackQuery):
                 db.del_promo(int(order_id), int(call.from_user.id))
                 for admin in admins:
                     try:
-                        await bot.send_message(admin, 'Новый заказ. Оплата с юмани. Посмотрите через админ-панель')
+                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с юмани. Посмотрите через админ-панель'))
                     except:
                         pass
                 ref = db.get_referal(call.from_user.id)
@@ -606,7 +728,7 @@ async def checkpayqiwicall(call: types.CallbackQuery):
                 db.del_promo(int(order_id), int(call.from_user.id))
                 for admin in admins:
                     try:
-                        await bot.send_message(admin, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель')
+                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
                     except:
                         pass
                 ref = db.get_referal(call.from_user.id)

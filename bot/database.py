@@ -311,6 +311,41 @@ class DB:
                 self.connection.rollback()
             finally:
                 lock.release()
+    
+    def get_catOrSubcat_name(self, catOrSubcatid, catOrSubcat, user_id):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT lan FROM users WHERE user_id=?', (user_id,))
+                lan = self.cursor.fetchone()
+                if catOrSubcat == "cat":
+                    table = "categories"
+                elif catOrSubcat == "subcat":
+                    table = "subcategories"
+                if lan[0] == "en":
+                    self.cursor.execute(f'SELECT eng_name FROM {table} WHERE id=?', (catOrSubcatid,))
+                    result = self.cursor.fetchone()
+                    return result[0]
+                else:
+                    self.cursor.execute(f'SELECT name FROM {table} WHERE id=?', (catOrSubcatid,))
+                    result = self.cursor.fetchone()
+                    return result[0]
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
+    
+    def get_cat_id_by_subcat_id(self, subcatId):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT categoryid FROM subcategories WHERE id=?', (subcatId,))
+                result = self.cursor.fetchone()
+                return result[0]
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
 
     def get_subcat_name(self, subcatid):
         with self.connection:
@@ -604,6 +639,24 @@ class DB:
                 self.connection.rollback()
             finally:
                 lock.release()
+    
+    def get_good_cat_and_subcat(self, goodid, user_id):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT subcategoryid FROM goods WHERE id=?', (goodid,))
+                subcatid = self.cursor.fetchone()
+                subcatid = subcatid[0]
+                # print(subcatid)
+                self.cursor.execute('SELECT categoryid FROM subcategories WHERE id=?', (subcatid,))
+                catid = self.cursor.fetchone()
+                catid = catid[0]
+                # print(catid)
+                return {'catid': catid, "subcatid": subcatid}
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
 
     def del_box_good(self, goodid):
         with self.connection:
@@ -824,12 +877,13 @@ class DB:
             finally:
                 lock.release()
 
-    def add_order(self, user_id, tovars, adress, comment, promocode):
+    def add_order(self, user_id, tovars, adress, comment, promocode, catAndSubcatDict):
         with self.connection:
             try:
                 lock.acquire(True)
                 tovars = pickle.dumps(tovars)
-                self.cursor.execute('INSERT INTO orders (user_id, status, tovars, adress, comment, time_of_creating, promo) VALUES (?, ?, ?, ?, ?, ?, ?)', (user_id, 'wait', tovars, adress, comment, time.time(), promocode))
+                catAndSubcatDict = json.dumps(catAndSubcatDict)
+                self.cursor.execute('INSERT INTO orders (user_id, status, tovars, adress, comment, time_of_creating, promo, catAndSudcatDict) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (user_id, 'wait', tovars, adress, comment, time.time(), promocode, catAndSubcatDict))
                 self.cursor.execute('SELECT id FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 1', (user_id,))
                 result = self.cursor.fetchone()
                 return result[0]
@@ -980,7 +1034,7 @@ class DB:
         with self.connection:
             try:
                 lock.acquire(True)
-                self.cursor.execute('SELECT tovars, adress, comment, photo FROM orders WHERE id=?', (order_id,))
+                self.cursor.execute('SELECT tovars, adress, comment, photo, catAndSudcatDict FROM orders WHERE id=?', (order_id,))
                 result = self.cursor.fetchone()
                 return result
             except:
