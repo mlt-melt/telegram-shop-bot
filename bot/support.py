@@ -13,10 +13,10 @@ async def suppmsg(message: types.Message):
     if db.check_ban(message.from_user.id):
         check_quest = db.check_questionsusr(message.from_user.id)
         if check_quest == 'ok':
-            await message.answer(translater(message.from_user.id, 'Введите свой вопрос и мы ответим в ближайшее время:'), reply_markup=cancel_mkp(message.from_user.id))
+            await message.answer(translater(message.from_user.id, 'Введите свой вопрос и мы ответим в ближайшее время:') + translater(message.from_user.id, '\n(Вы можете приложить фотографию вашей проблемы. Как это сделать - https://clck.ru/33LuLr)'), reply_markup=cancel_mkp(message.from_user.id), disable_web_page_preview=True)
             await SuppUser.UserId.set()
         else:
-            await message.answer(translater(message.from_user.id, 'Вы можете дополнить свой вопрос. Просто нажмите на кнопку ниже'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('Дополнить вопрос', callback_data=f'addquesttoquest_{check_quest}')))
+            await message.answer(translater(message.from_user.id, 'Вы можете дополнить свой вопрос. Просто нажмите на кнопку ниже'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(translater(message.from_user.id, 'Дополнить вопрос'), callback_data=f'addquesttoquest_{check_quest}')))
 
 
 @dp.callback_query_handler(text='cancel', state=SuppUser.UserId)
@@ -43,7 +43,7 @@ async def suppuseruseridmsg(message: types.Message, state: FSMContext):
     
     await message.answer(translater(message.from_user.id, 'Ваше сообщение отправлено! Ожидайте ответа'))
     question_id = db.add_question(message.from_user.id, message.text)
-    await message.answer(translater(message.from_user.id, 'Вы можете дополнить свой вопрос. Просто нажмите на кнопку ниже'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('Дополнить вопрос', callback_data=f'addquesttoquest_{question_id}')))
+    await message.answer(translater(message.from_user.id, 'Вы можете дополнить свой вопрос. Просто нажмите на кнопку ниже'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(translater(message.from_user.id, 'Дополнить вопрос'), callback_data=f'addquesttoquest_{question_id}')))
     await message.answer(translater(message.from_user.id, 'Вы были возвращены в меню'), reply_markup=menu_mkp_without_sprt_btn(message.from_user.id))
     await state.finish()
 
@@ -56,7 +56,7 @@ async def addquesttoquestcall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['CountMsg'] = 0
         data['QuestId'] = questid
-    await call.message.answer(translater(call.from_user.id, 'Введите текст и я его отправлю администратору'), reply_markup=cancel_mkp(call.from_user.id))
+    await call.message.answer(translater(call.from_user.id, 'Введите текст и я его отправлю администратору') + translater(call.from_user.id, '\n(Вы можете приложить фотографию вашей проблемы. Как это сделать - https://clck.ru/33LuLr)'), reply_markup=cancel_mkp(call.from_user.id), disable_web_page_preview=True)
 
 
 @dp.message_handler(state=QuestAddQuest.QuestId)
@@ -68,17 +68,17 @@ async def questaddquestquestidmsg(message: types.Message, state: FSMContext):
     if countmsg < 3:
         for admin in admins:
             try:
-                await bot.send_message(admin, translater(admin, f'Дополнение к вопросу') + f'№{questid}\n\n{message.text}')
+                await bot.send_message(admin, translater(admin, f'Дополнение к вопросу') + f' №{questid}\n\n{message.text}')
             except:
                 pass
 
         supports = db.get_supports()
         for support in supports:
             try:
-                await bot.send_message(support, translater(support, f'Дополнение к вопросу') + f'№{questid}\n\n{message.text}')
+                await bot.send_message(support, translater(support, f'Дополнение к вопросу') + f' №{questid}\n\n{message.text}')
             except:
                 pass
-        await message.answer(translater(message.from_user.id, 'Введите ещё дополнение к вопросу или нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
+        await message.answer(translater(message.from_user.id, 'Введите ещё дополнение к вопросу или нажмите "Отменить"') + translater(message.from_user.id, '\n(Вы можете приложить фотографию вашей проблемы. Как это сделать - https://clck.ru/33LuLr)'), reply_markup=cancel_mkp(message.from_user.id), disable_web_page_preview=True)
         countmsg = countmsg+1
         async with state.proxy() as data:
             data['CountMsg'] = countmsg
@@ -87,13 +87,13 @@ async def questaddquestquestidmsg(message: types.Message, state: FSMContext):
     elif countmsg == 3:
         for admin in admins:
             try:
-                await bot.send_message(admin, translater(admin, f'Дополнение к вопросу') + f'№{questid}\n\n{message.text}')
+                await bot.send_message(admin, translater(admin, f'Дополнение к вопросу') + f' №{questid}\n\n{message.text}')
             except:
                 pass
         
         for support in supports:
             try:
-                await bot.send_message(support, translater(support, f'Дополнение к вопросу') + f'№{questid}\n\n{message.text}')
+                await bot.send_message(support, translater(support, f'Дополнение к вопросу') + f' №{questid}\n\n{message.text}')
             except:
                 pass
         db.add_toquest(int(questid), message.text)
@@ -112,7 +112,7 @@ async def answercall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete_reply_markup()
     
     user_id = call.data.split('_')[1]
-    await call.message.answer(translater(call.from_user.id, 'Введите ответ пользователю (язык пользователя -') + f'{db.get_langugage(user_id)}):')
+    await call.message.answer(translater(call.from_user.id, 'Введите ответ пользователю (язык пользователя -') + f' {db.get_langugage(user_id)}):' + translater(call.from_user.id, '\n(Вы можете приложить фото для пользователя. Как это сделать - https://clck.ru/33Lwko)'))
     await SuppAdmin.UserId.set()
     quest_id = call.data.split('_')[2]
     async with state.proxy() as data:

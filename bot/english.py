@@ -250,7 +250,7 @@ english = [
     'Which support agent do you want to remove?',
     'Questions from users:',
     'Reply',
-    'Return'
+    'Return back'
     'A question from a user with an ID:',
     'Do you really want to delete the product',
     'The product has been successfully deleted! You have been returned to the admin panel',
@@ -421,6 +421,9 @@ english = [
     'New order. Payment from ЮMoney. Look through the admin panel',
     'New order. Payment with QIWI. Look through the admin panel',
     'New order. Payment in Crypto. Look through the admin panel',
-    'Add'
+    'Add',
+    'Expand Question',
+    '\n(You can attach a photo of your issue. How to do it - https://clck.ru/33Lv9s)'
+    '\n(You can attach a photo for user. How to do it - https://clck.ru/33Lwcp)'
 ]
 
