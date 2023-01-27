@@ -423,7 +423,12 @@ english = [
     'New order. Payment in Crypto. Look through the admin panel',
     'Add',
     'Expand Question',
-    '\n(You can attach a photo of your issue. How to do it - https://clck.ru/33Lv9s)'
-    '\n(You can attach a photo for user. How to do it - https://clck.ru/33Lwcp)'
+    '\n(You can attach a photo of your issue. How to do it - https://clck.ru/33Lv9s)',
+    '\n(You can attach a photo for user. How to do it - https://clck.ru/33Lwcp)',
+    'The price has been set',
+    'Physical product',
+    'Create as a physical product',
+    'You can create this product as a digital one. In this case, immediately after the purchase, the user will receive it along with your instructions. Click "Physical product" to skip this step or send the product and instructions to it (Write in text, you can attach <b>one</b> photo or video. If the product is a file or you need to attach more than one photo - use file sharing services and attach a link)',
+    'This is digital good, it will be sent to you immediately after purchase'
 ]
 

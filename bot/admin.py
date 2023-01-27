@@ -426,6 +426,7 @@ async def addsubcatengnamemsg(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text_contains='adminsubcat_', state=AddGood.EngDescription)
 @dp.callback_query_handler(text_contains='adminsubcat_', state=AddGood.Photo)
 @dp.callback_query_handler(text_contains='adminsubcat_', state=AddGood.Price)
+@dp.callback_query_handler(text_contains='adminsubcat_', state=AddGood.DigitalGood)
 @dp.callback_query_handler(text_contains='adminsubcat_', state=ChangeNamesubcat.SubcatId)
 @dp.callback_query_handler(text_contains='adminsubcat_', state=ChangeNamesubcatRus.SubcatId)
 @dp.callback_query_handler(text_contains='adminsubcat_', state=ChangeNamesubcatEng.SubcatId)
@@ -699,7 +700,7 @@ async def addgooddescriptionmsg(message: types.Message, state: FSMContext):
         
 
 @dp.message_handler(state=AddGood.EngDescription)
-async def addgoodengdescmsg(message: types.Message, state: FSMContext):
+async def addGoodEngDescsg(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['EngDescription'] = message.text
     subcatid = data['SubcatId']
@@ -712,7 +713,7 @@ async def addgoodengdescmsg(message: types.Message, state: FSMContext):
     await AddGood.next()
 
 @dp.message_handler(content_types='photo', state=AddGood.Photo)
-async def addgoodphotophoto(message: types.Message, state: FSMContext):
+async def addGoodPhoto(message: types.Message, state: FSMContext):
     file_info = await bot.get_file(message.photo[-1].file_id)
     filename = file_info.file_path.split('/')[-1]
     await bot.download_file(file_info.file_path, f'images/{filename}')
@@ -726,8 +727,9 @@ async def addgoodphotophoto(message: types.Message, state: FSMContext):
     await message.answer(translater(message.from_user.id, 'Введите цену (целым числом, либо через точку, например: <code>249.50</code>)'), reply_markup=mkp)
     await AddGood.next()
 
+
 @dp.callback_query_handler(text='skip', state=AddGood.Photo)
-async def addgoodphotoskipcall(call: types.CallbackQuery, state: FSMContext):
+async def addGoodPhotoSkipCall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['Photo'] = 'None'
     subcatid = data['SubcatId']
@@ -741,40 +743,17 @@ async def addgoodphotoskipcall(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(state=AddGood.Price)
-async def addgoodprice(message: types.Message, state: FSMContext):
+async def addDigitalGood(message: types.Message, state: FSMContext):
     try:
         price = float(message.text)
         async with state.proxy() as data:
             data['Price'] = price
-        subcatid = data['SubcatId']
-        cat_id = data['CatId'] 
-        name = data['Name']
-        engname = data['EngName']
-        description = data['Description']
-        engdesc = data['EngDescription']
+        await message.answer(translater(message.from_user.id, 'Цена была установлена' + f' - {price}'))
         mkp = types.InlineKeyboardMarkup()
-        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Добавить'), callback_data='add')
-        btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
-        mkp.add(btn1).add(btn2)
-        if name != 'None' and engname != 'None':
-            # await message.answer(f'Name: {engname}\nDescription: {engdesc}')
-            if data['Photo'] == 'None':
-                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
-            else:
-                photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
-        elif name !=  'None':
-            if data['Photo'] == 'None':
-                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
-            else:
-                photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
-        elif name == 'None':
-            if data['Photo'] == 'None':
-                await message.answer((translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
-            else:
-                photo = data['Photo']
-                await message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(message.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(message.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(message.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+        btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Создать как физический товар'), callback_data='physical')
+        mkp.add(btn1)
+        await message.answer(translater(message.from_user.id, 'Вы можете создать этот товар как цифровой. В таком случае сразу после покупки пользователь его получит вместе с вашими инструкциями. Нажмите "Создать как физический товар", чтобы пропустить этот шаг или отправьте товар и инструкции к нему (Напишите текстом, можно приложить <b>одно</b> фото или видео. Если товар представляет собой файл или вам нужно приложить более одного фото - воспользуйтесь файлообменниками и прикрепите ссылку)'), reply_markup=mkp)
+        await AddGood.next()
     except Exception as ex:
         print(ex)
         async with state.proxy() as data:
@@ -786,7 +765,78 @@ async def addgoodprice(message: types.Message, state: FSMContext):
         mkp.add(btn1)
         await message.answer(translater(message.from_user.id, 'Вы неправильно ввели цену! Введите цену целым числом, либо через точку, например: <code>249.50</code>'))
 
-@dp.callback_query_handler(text='add', state=AddGood.Price)
+
+@dp.message_handler(content_types=['text', 'photo', 'video'], state=AddGood.DigitalGood)
+async def digitalGoodConfirm(message: types.Message, state: FSMContext):
+    mkp = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Подтвердить'), callback_data='add_confirm')
+    btn2 = types.InlineKeyboardButton(translater(message.from_user.id, 'Создать как физический товар'), callback_data='physical')
+    mkp.add(btn1).add(btn2)
+    await message.answer('——————————————————————————\n' + translater(message.from_user.id, 'Сообщение ниже будет отправлено пользователю сразу после оплаты товара. Вы можете подтвердить, прислать новые инструкции или оставить данный товар как физический'), reply_markup=mkp)
+
+    if message.photo:
+        file_info = await bot.get_file(message.photo[-1].file_id)
+        filename = file_info.file_path.split('/')[-1]
+        await bot.download_file(file_info.file_path, f'images/{filename}')
+        await bot.send_photo(message.from_user.id, message.photo[-1].file_id, caption=message.caption, parse_mode="html")
+        async with state.proxy() as data:
+            data['DigitalGood'] = {"type": "photo", "file_path": filename, "text": message.caption}
+            
+    elif message.video:
+        file_info = await bot.get_file(message.video.file_id)
+        filename = file_info.file_path.split('/')[-1]
+        await bot.download_file(file_info.file_path, f'images/{filename}')
+        await bot.send_video(message.from_user.id, message.video.file_id, caption=message.caption, parse_mode="html")
+        async with state.proxy() as data:
+            data['DigitalGood'] = {"type": "video", "fileName": filename, "text": message.caption}
+
+    elif message.text:
+        await bot.send_message(message.from_user.id, f'{message.text}', parse_mode="html")
+        async with state.proxy() as data:
+            data['DigitalGood'] = {"type": "text", "fileName": None, "text": message.text}
+
+
+@dp.callback_query_handler(text=['physical', 'add_confirm'], state=AddGood.DigitalGood)
+async def confirmAdding(call: types.CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        pass
+    price = data['Price']
+    subcatid = data['SubcatId']
+    cat_id = data['CatId'] 
+    name = data['Name']
+    engname = data['EngName']
+    description = data['Description']
+    engdesc = data['EngDescription']
+    if call.data != 'add_confirm':
+        async with state.proxy() as data:
+            data['DigitalGood'] = None
+    digital = data['DigitalGood']
+    mkp = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Добавить'), callback_data='add')
+    btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data=f'adminsubcat_{subcatid}_{cat_id}')
+    mkp.add(btn1).add(btn2)
+    if name != 'None' and engname != 'None':
+        # await message.answer(f'Name: {engname}\nDescription: {engdesc}')
+        if data['Photo'] == 'None':
+            await call.message.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+        else:
+            photo = data['Photo']
+            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+    elif name !=  'None':
+        if data['Photo'] == 'None':
+            await call.call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+        else:
+            photo = data['Photo']
+            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+    elif name == 'None':
+        if data['Photo'] == 'None':
+            await call.call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+        else:
+            photo = data['Photo']
+            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+
+
+@dp.callback_query_handler(text='add', state=AddGood.DigitalGood)
 async def addgoodpricecalladd(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         pass
@@ -797,8 +847,10 @@ async def addgoodpricecalladd(call: types.CallbackQuery, state: FSMContext):
     engdesc = data['EngDescription']
     photo = data['Photo']
     price = data['Price']
+    digital = data['DigitalGood']
+    digital = json.dumps(digital)
     currency = db.get_currencysetadm()[0]
-    db.add_good(subcat_id, name, engname, description, engdesc, photo, price, currency)
+    db.add_good(subcat_id, name, engname, description, engdesc, photo, price, currency, digital)
     await call.message.delete()
     await call.message.answer(translater(call.from_user.id, 'Товар был успешно добавлен! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(call.from_user.id))
     await state.finish()

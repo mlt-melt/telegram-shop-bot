@@ -83,6 +83,7 @@ class AddGood(StatesGroup):
     EngDescription = State()
     Photo = State()
     Price = State()
+    DigitalGood = State()
 
 class ChangeNameGood(StatesGroup):
     GoodId = State()

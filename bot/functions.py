@@ -144,10 +144,14 @@ async def send_good(step, subcatid, user_id):
     else:
         mkp.add(btn1, btn2, btn3).add(btn4, btn5, btn6).add(btn7).add(btn8).add(btn9)
 
-    if photo == 'None':
-        await bot.send_message(user_id, '<b>'+translater(user_id, 'Название товара')+f'</b>: <code>{name}</code>\n<b>'+translater(user_id, 'Описание')+f'</b>: {description}\n<b>'+translater(user_id, 'Цена')+f'</b>: <code>{price}</code> {curr}', reply_markup=mkp)
+    if db.check_is_digital(goodid):
+        isDigital = '\n——————\n' + translater(user_id, 'Это цифровой товар, он будет сразу отправлен вам после покупки')
     else:
-        await bot.send_photo(user_id, open(f'images/{photo}', 'rb'), caption='<b>'+translater(user_id, 'Название товара')+f'</b>: <code>{name}</code>\n<b>'+translater(user_id, 'Описание')+f'</b>: {description}\n<b>'+translater(user_id, 'Цена')+f'</b>: <code>{price}</code> {curr}', reply_markup=mkp)
+        isDigital = ""
+    if photo == 'None':
+        await bot.send_message(user_id, '<b>'+translater(user_id, 'Название товара')+f'</b>: <code>{name}</code>\n<b>'+translater(user_id, 'Описание')+f'</b>: {description}\n<b>'+translater(user_id, 'Цена')+f'</b>: <code>{price}</code> {curr}' + isDigital, reply_markup=mkp)
+    else:
+        await bot.send_photo(user_id, open(f'images/{photo}', 'rb'), caption='<b>'+translater(user_id, 'Название товара')+f'</b>: <code>{name}</code>\n<b>'+translater(user_id, 'Описание')+f'</b>: {description}\n<b>'+translater(user_id, 'Цена')+f'</b>: <code>{price}</code> {curr}' + isDigital, reply_markup=mkp)
 
 
 

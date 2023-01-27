@@ -381,7 +381,7 @@ class DB:
             finally:
                 lock.release()
 
-    def add_good(self, subcatid, name, eng_name, description, eng_desc, photo, price, currency):
+    def add_good(self, subcatid, name, eng_name, description, eng_desc, photo, price, currency, digital):
         with self.connection:
             try:
                 lock.acquire(True)
@@ -397,7 +397,7 @@ class DB:
                     price_eur = str(price)
                     price = str(float(price)*float(courses[1]))
                     price_usd = str(float(price)/float(courses[0]))
-                self.cursor.execute('INSERT INTO goods (subcategoryid, name, eng_name, description, eng_desc, price, photo, price_usd, price_eur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (subcatid, name, eng_name, description, eng_desc, price, photo, price_usd, price_eur))
+                self.cursor.execute('INSERT INTO goods (subcategoryid, name, eng_name, description, eng_desc, price, photo, price_usd, price_eur, digital) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (subcatid, name, eng_name, description, eng_desc, price, photo, price_usd, price_eur, digital))
                 return
             except:
                 self.connection.rollback()
@@ -411,6 +411,35 @@ class DB:
                 self.cursor.execute('SELECT name, description, price, photo FROM goods WHERE id=?', (goodid,))
                 result = self.cursor.fetchone()
                 return result
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
+
+    def get_good_digital(self, goodid):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT digital FROM goods WHERE id=?', (goodid,))
+                result = self.cursor.fetchone()
+                result = json.loads(result[0])
+                return result
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
+    
+    def check_is_digital(self, goodid):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT digital FROM goods WHERE id=?', (goodid,))
+                result = self.cursor.fetchone()
+                try:
+                    result = json.loads(result[0])
+                    return True
+                except:
+                    return False
             except:
                 self.connection.rollback()
             finally:
@@ -1036,6 +1065,19 @@ class DB:
                 lock.acquire(True)
                 self.cursor.execute('SELECT tovars, adress, comment, photo, catAndSudcatDict FROM orders WHERE id=?', (order_id,))
                 result = self.cursor.fetchone()
+                return result
+            except:
+                self.connection.rollback()
+            finally:
+                lock.release()
+    
+    def get_order_digital(self, good_id):
+        with self.connection:
+            try:
+                lock.acquire(True)
+                self.cursor.execute('SELECT digital FROM goods WHERE id=?', (good_id,))
+                result = self.cursor.fetchone()
+                result = json.loads(result[0])
                 return result
             except:
                 self.connection.rollback()

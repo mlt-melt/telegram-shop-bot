@@ -1,3 +1,4 @@
+import json
 from config import dp, bot, db, admins
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -325,15 +326,46 @@ async def cryptocall(call: types.CallbackQuery):
             status = await check_pay(pay_id)
             if status == 'confirmed' or status == 'sending' or status == 'finished':
                 if db.get_order_status(int(order_id)) == 'wait':
-                    await call.message.delete()
-                    # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+                    orderInfo = db.get_order_info(order_id)
+                    catAndSudcatDict = json.loads(orderInfo[4])
+                    allGoodsIds = []
+                    for i in catAndSudcatDict:
+                        for j in i:
+                            for k in j:
+                                allGoodsIds.append(k)
+                    digitalList = []
+                    digitalExists = False
+                    for i in allGoodsIds:
+                        if db.check_is_digital(int(i)):
+                            digitalList.append(i)
+                            digitalExists = True
+                    for i in digitalList:
+                        digitalDict = db.get_order_digital(order_id)
+                        digitalType = digitalDict["type"]
+                        digitalFileName = digitalDict["fileName"]
+                        digitalText = digitalDict["text"]
+                        good_info = db.get_good_info(i, call.from_user.id)
+                        digitalGoodName = good_info[0]
+                        await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n⬇️———————— ⬇️', parse_mode="html")
+                        if digitalType == "photo":
+                            msg_id = await bot.send_photo(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                        elif digitalType == "video":
+                            msg_id = await bot.send_video(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                        else:
+                            msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+                        await bot.pin_chat_message(call.from_user.id, msg_id)
+
+
                     db.pay_order(int(order_id))
                     db.del_promo(int(order_id), int(call.from_user.id))
-                    for admin in admins:
-                        try:
-                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
-                        except:
-                            pass
+                    if digitalList.sort() != allGoodsIds.sort():
+                        await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
+                        for admin in admins:
+                            try:
+                                await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
+                            except:
+                                pass
+
                     ref = db.get_referal(call.from_user.id)
                     refp = db.get_refproc_for_user(call.from_user.id)
                     if ref == 0:
@@ -353,7 +385,7 @@ async def cryptocall(call: types.CallbackQuery):
 
     except Exception as ex:
         await call.message.answer(translater(call.from_user.id, f'Сумма оплаты ниже минимальной. Попробуйте добавить ещё товар в корзину'), reply_markup=menu_mkp(call.from_user.id))
-        await call.message.answer(translater(call.from_user.id, f'Произошла ошибка:\n<b>{ex}</b>\nОбратитесь к администратору'), parse_mode="html")
+        # await call.message.answer(translater(call.from_user.id, f'Произошла ошибка:\n<b>{ex}</b>\nОбратитесь к администратору'), parse_mode="html")
 
 @dp.callback_query_handler(text_contains='cryptocheck_')
 async def cryptocheckcall(call: types.CallbackQuery):
@@ -365,15 +397,47 @@ async def cryptocheckcall(call: types.CallbackQuery):
     status = await check_pay(pay_id)
     if order_id != 'n':
         if status == 'confirmed' or status == 'sending' or status == 'finished':
-            await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
-            # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+
+            orderInfo = db.get_order_info(order_id)
+            catAndSudcatDict = json.loads(orderInfo[4])
+            allGoodsIds = []
+            for i in catAndSudcatDict:
+                for j in i:
+                    for k in j:
+                        allGoodsIds.append(k)
+            digitalList = []
+            digitalExists = False
+            for i in allGoodsIds:
+                if db.check_is_digital(int(i)):
+                    digitalList.append(i)
+                    digitalExists = True
+            for i in digitalList:
+                digitalDict = db.get_order_digital(order_id)
+                digitalType = digitalDict["type"]
+                digitalFileName = digitalDict["fileName"]
+                digitalText = digitalDict["text"]
+                good_info = db.get_good_info(i, call.from_user.id)
+                digitalGoodName = good_info[0]
+                await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n⬇️———————— ⬇️', parse_mode="html")
+                if digitalType == "photo":
+                    msg_id = await bot.send_photo(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                elif digitalType == "video":
+                    msg_id = await bot.send_video(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                else:
+                    msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+                await bot.pin_chat_message(call.from_user.id, msg_id)
+
+
             db.pay_order(int(order_id))
             db.del_promo(int(order_id), int(call.from_user.id))
-            for admin in admins:
-                try:
-                    await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
-                except:
-                    pass
+            if digitalList.sort() != allGoodsIds.sort():
+                await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
+                for admin in admins:
+                    try:
+                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
+                    except:
+                        pass
+
             ref = db.get_referal(call.from_user.id)
             refp = db.get_refproc_for_user(call.from_user.id)
             if ref == 0:
@@ -471,15 +535,48 @@ async def paybalancecall(call: types.CallbackQuery, state: FSMContext):
 
         order_id = db.add_order(call.from_user.id, order, adress, comment, promocode, finalDict)
 
-        db.boxlclear(call.from_user.id)
-        # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+        orderInfo = db.get_order_info(order_id)
+        catAndSudcatDict = json.loads(orderInfo[4])
+        allGoodsIds = []
+        for i in catAndSudcatDict:
+            for j in catAndSudcatDict[i]:
+                for k in catAndSudcatDict[i][j]:
+                    allGoodsIds.append(k)
+        digitalList = []
+        digitalExists = False
+        for i in allGoodsIds:
+            if db.check_is_digital(int(i)): 
+                digitalList.append(i)
+                digitalExists = True
+        for i in digitalList:
+            digitalDict = db.get_order_digital(int(i))
+
+            digitalType = digitalDict["type"]
+            digitalFileName = digitalDict["file_path"]
+            digitalText = digitalDict["text"]
+            good_info = db.get_good_info(i, call.from_user.id)
+            digitalGoodName = good_info[0]
+            await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n——————————', parse_mode="html")
+            if digitalType == "photo":
+                msg_id = await bot.send_photo(call.from_user.id, open(f'images/{digitalFileName}', 'rb'), caption=digitalText, parse_mode="html")
+            elif digitalType == "video":
+                msg_id = await bot.send_video(call.from_user.id, open(f'images/{digitalFileName}', 'rb'), caption=digitalText, parse_mode="html")
+            else:
+                msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+            # await call.message.answer(msg_id)
+            await bot.pin_chat_message(call.from_user.id, msg_id["message_id"])
+
+
         db.pay_order(int(order_id))
+        db.boxlclear(call.from_user.id)
         db.del_promo(int(order_id), int(call.from_user.id))
-        for admin in admins:
-            try:
-                await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
-            except:
-                pass
+        if digitalList.sort() != allGoodsIds.sort():
+            for admin in admins:
+                try:
+                    await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
+                except:
+                    pass
+
         ref = db.get_referal(call.from_user.id)
         refp = db.get_refproc_for_user(call.from_user.id)
         if ref == 0:
@@ -645,15 +742,45 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
             if check_payment(bill) == 'pay':
                 if db.get_order_status(int(order_id)) == 'wait':
                     await call.message.delete()
-                    await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
-                    # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+                    orderInfo = db.get_order_info(order_id)
+                    catAndSudcatDict = json.loads(orderInfo[4])
+                    allGoodsIds = []
+                    for i in catAndSudcatDict:
+                        for j in i:
+                            for k in j:
+                                allGoodsIds.append(k)
+                    digitalList = []
+                    digitalExists = False
+                    for i in allGoodsIds:
+                        if db.check_is_digital(int(i)):
+                            digitalList.append(i)
+                            digitalExists = True
+                    for i in digitalList:
+                        digitalDict = db.get_order_digital(order_id)
+                        digitalType = digitalDict["type"]
+                        digitalFileName = digitalDict["fileName"]
+                        digitalText = digitalDict["text"]
+                        good_info = db.get_good_info(i, call.from_user.id)
+                        digitalGoodName = good_info[0]
+                        await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n⬇️———————— ⬇️', parse_mode="html")
+                        if digitalType == "photo":
+                            msg_id = await bot.send_photo(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                        elif digitalType == "video":
+                            msg_id = await bot.send_video(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                        else:
+                            msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+                        await bot.pin_chat_message(call.from_user.id, msg_id)
+
+
                     db.pay_order(int(order_id))
                     db.del_promo(int(order_id), int(call.from_user.id))
-                    for admin in admins:
-                        try:
-                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
-                        except:
-                            pass
+                    if digitalList.sort() != allGoodsIds.sort():
+                        await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
+                        for admin in admins:
+                            try:
+                                await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
+                            except:
+                                pass
                     ref = db.get_referal(call.from_user.id)
                     refp = db.get_refproc_for_user(call.from_user.id)
                     if ref == 0:
@@ -678,15 +805,45 @@ async def checkpayyoomcall(call: types.CallbackQuery):
         if order_id != 'n':
             if check_pay_yoo(call.from_user.id, order_id, '1') == 'pay':
                 await call.message.delete()
-                await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
-                # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+                orderInfo = db.get_order_info(order_id)
+                catAndSudcatDict = json.loads(orderInfo[4])
+                allGoodsIds = []
+                for i in catAndSudcatDict:
+                    for j in i:
+                        for k in j:
+                            allGoodsIds.append(k)
+                digitalList = []
+                digitalExists = False
+                for i in allGoodsIds:
+                    if db.check_is_digital(int(i)):
+                        digitalList.append(i)
+                        digitalExists = True
+                for i in digitalList:
+                    digitalDict = db.get_order_digital(order_id)
+                    digitalType = digitalDict["type"]
+                    digitalFileName = digitalDict["fileName"]
+                    digitalText = digitalDict["text"]
+                    good_info = db.get_good_info(i, call.from_user.id)
+                    digitalGoodName = good_info[0]
+                    await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n⬇️———————— ⬇️', parse_mode="html")
+                    if digitalType == "photo":
+                        msg_id = await bot.send_photo(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                    elif digitalType == "video":
+                        msg_id = await bot.send_video(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                    else:
+                        msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+                    await bot.pin_chat_message(call.from_user.id, msg_id)
+
+
                 db.pay_order(int(order_id))
                 db.del_promo(int(order_id), int(call.from_user.id))
-                for admin in admins:
-                    try:
-                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с юмани. Посмотрите через админ-панель'))
-                    except:
-                        pass
+                if digitalList.sort() != allGoodsIds.sort():
+                    await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
+                    for admin in admins:
+                        try:
+                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата криптовалютой. Посмотрите через админ-панель'))
+                        except:
+                            pass
                 ref = db.get_referal(call.from_user.id)
                 refp = db.get_refproc_for_user(call.from_user.id)
                 if ref == 0:
@@ -722,15 +879,46 @@ async def checkpayqiwicall(call: types.CallbackQuery):
         if order_id != 'n':
             if check_payment(bill) == 'pay':
                 await call.message.delete()
-                await call.message.answer(translater(call.from_user.id, 'Оплата найдена, я передал ваш заказ менеджеру.'), reply_markup=menu_mkp(call.from_user.id))
-                # await bot.unpin_all_chat_messages(chat_id = call.from_user.id)
+                orderInfo = db.get_order_info(order_id)
+                catAndSudcatDict = json.loads(orderInfo[4])
+                allGoodsIds = []
+                for i in catAndSudcatDict:
+                    for j in i:
+                        for k in j:
+                            allGoodsIds.append(k)
+                digitalList = []
+                digitalExists = False
+                for i in allGoodsIds:
+                    if db.check_is_digital(int(i)):
+                        digitalList.append(i)
+                        digitalExists = True
+                for i in digitalList:
+                    digitalDict = db.get_order_digital(order_id)
+                    digitalType = digitalDict["type"]
+                    digitalFileName = digitalDict["fileName"]
+                    digitalText = digitalDict["text"]
+                    good_info = db.get_good_info(i, call.from_user.id)
+                    digitalGoodName = good_info[0]
+                    await bot.send_message(call.from_user.id, f'——————————\nВы купили "{digitalGoodName}"\nНиже сообщение с товаром и всеми инструкциями к нему. Это сообщение будет закреплено\nЕсли у вас возникли какие-то проблемы - обратитесь в поддержку в главном меню\n⬇️———————— ⬇️', parse_mode="html")
+                    if digitalType == "photo":
+                        msg_id = await bot.send_photo(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                    elif digitalType == "video":
+                        msg_id = await bot.send_video(call.from_user.id, f'images/{digitalFileName}', caption=digitalText, parse_mode="html")
+                    else:
+                        msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
+                    await bot.pin_chat_message(call.from_user.id, msg_id)
+
+
                 db.pay_order(int(order_id))
                 db.del_promo(int(order_id), int(call.from_user.id))
-                for admin in admins:
-                    try:
-                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
-                    except:
-                        pass
+
+                if digitalList.sort() != allGoodsIds.sort():
+                    await call.message.answer(translater(call.from_user.id, 'Оплата найдена, менеджер был уведомлен'), reply_markup=menu_mkp(call.from_user.id))
+                    for admin in admins:
+                        try:
+                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с киви. Посмотрите через админ-панель'))
+                        except:
+                            pass
                 ref = db.get_referal(call.from_user.id)
                 refp = db.get_refproc_for_user(call.from_user.id)
                 if ref == 0:
