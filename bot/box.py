@@ -183,7 +183,7 @@ async def neworderpromomsg(message: types.Message, state: FSMContext):
         if yoomoneystat == 'on':
             mkp.insert(btn3)
         mkp.add(btn4).add(btn5)
-        await message.answer('<b>'+translater(message.from_user.id, 'Ваш заказ')+f'</b>:\n{text}' + translater(message.from_user.id, 'Доставка: ') + f'{delinfo[0]} ({delinfo[1]})\n\n<b>'+translater(message.from_user.id, 'Итого к оплате')+f'</b>: <code>{float(price)}</code>\n\n<b>'+translater(message.from_user.id, 'Адрес доставки')+f'</b>: <code>{adress}</code>\n<b>'+translater(message.from_user.id, 'Способ доствки')+f'</b>: {delinfo[0]}\n<b>'+translater(message.from_user.id, 'Комментарий')+f'</b>: <code>{comment}</code>')
+        await message.answer('<b>'+translater(message.from_user.id, 'Ваш заказ')+f'</b>:\n{text}' + translater(message.from_user.id, 'Доставка: ') + f'{delinfo[0]} ({delinfo[1]})\n\n<b>'+translater(message.from_user.id, 'Итого к оплате')+f'</b>: <code>{round(float(price),2)}</code>\n\n<b>'+translater(message.from_user.id, 'Адрес доставки')+f'</b>: <code>{adress}</code>\n<b>'+translater(message.from_user.id, 'Способ доствки')+f'</b>: {delinfo[0]}\n<b>'+translater(message.from_user.id, 'Комментарий')+f'</b>: <code>{comment}</code>')
         await message.answer(translater(message.from_user.id, 'Выберите способ оплаты:'), reply_markup=mkp)
 
 @dp.callback_query_handler(text='skip', state=NewOrder.Promo)
@@ -228,7 +228,7 @@ async def neworderpromoskipcall(call: types.CallbackQuery, state: FSMContext):
     if yoomoneystat == 'on':
         mkp.insert(btn3)
     mkp.add(btn4).add(btn5)
-    await call.message.answer('<b>'+translater(call.from_user.id, 'Ваш заказ')+f'</b>:\n{text}' + translater(call.from_user.id, 'Доставка: ') + f'{delinfo[0]} ({delinfo[1]})\n\n<b>'+translater(call.from_user.id, 'Итого к оплате')+f'</b>: <code>{float(price)}</code>\n\n<b>'+translater(call.from_user.id, 'Адрес доставки')+f'</b>: <code>{adress}</code>\n<b>'+translater(call.from_user.id, 'Способ доствки')+f'</b>: {delinfo[0]}\n<b>'+translater(call.from_user.id, 'Комментарий')+f'</b>: <code>{comment}</code>')
+    await call.message.answer('<b>'+translater(call.from_user.id, 'Ваш заказ')+f'</b>:\n{text}' + translater(call.from_user.id, 'Доставка: ') + f'{delinfo[0]} ({delinfo[1]})\n\n<b>'+translater(call.from_user.id, 'Итого к оплате')+f'</b>: <code>{round(float(price),2)}</code>\n\n<b>'+translater(call.from_user.id, 'Адрес доставки')+f'</b>: <code>{adress}</code>\n<b>'+translater(call.from_user.id, 'Способ доствки')+f'</b>: {delinfo[0]}\n<b>'+translater(call.from_user.id, 'Комментарий')+f'</b>: <code>{comment}</code>')
     await call.message.answer(translater(call.from_user.id, 'Выберите способ оплаты:'), reply_markup=mkp)
 
 
@@ -367,7 +367,7 @@ async def cryptocall(call: types.CallbackQuery):
                                 pass
 
                     ref = db.get_referal(call.from_user.id)
-                    refp = db.get_refproc_for_user(call.from_user.id)
+                    refp = db.get_refproc_for_user(ref)
                     if ref == 0:
                         pass
                     else:
@@ -439,7 +439,7 @@ async def cryptocheckcall(call: types.CallbackQuery):
                         pass
 
             ref = db.get_referal(call.from_user.id)
-            refp = db.get_refproc_for_user(call.from_user.id)
+            refp = db.get_refproc_for_user(ref)
             if ref == 0:
                 pass
             else:
@@ -543,11 +543,9 @@ async def paybalancecall(call: types.CallbackQuery, state: FSMContext):
                 for k in catAndSudcatDict[i][j]:
                     allGoodsIds.append(k)
         digitalList = []
-        digitalExists = False
         for i in allGoodsIds:
             if db.check_is_digital(int(i)): 
                 digitalList.append(i)
-                digitalExists = True
         for i in digitalList:
             digitalDict = db.get_order_digital(int(i))
 
@@ -563,22 +561,43 @@ async def paybalancecall(call: types.CallbackQuery, state: FSMContext):
                 msg_id = await bot.send_video(call.from_user.id, open(f'images/{digitalFileName}', 'rb'), caption=digitalText, parse_mode="html")
             else:
                 msg_id = await bot.send_message(call.from_user.id, f'{digitalText}', parse_mode="html")
-            # await call.message.answer(msg_id)
             await bot.pin_chat_message(call.from_user.id, msg_id["message_id"])
 
 
         db.pay_order(int(order_id))
-        db.boxlclear(call.from_user.id)
+        # db.boxlclear(call.from_user.id)
         db.del_promo(int(order_id), int(call.from_user.id))
-        if digitalList.sort() != allGoodsIds.sort():
-            for admin in admins:
-                try:
-                    await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
-                except:
-                    pass
+
+        if len(allGoodsIds) != 1:
+            try:
+                digitalList.sort()
+                allGoodsIds.sort()
+                digitalList = json.dumps(digitalList)
+                allGoodsIds = json.dumps(allGoodsIds)
+                if digitalList != allGoodsIds:
+                    for admin in admins:
+                        try:
+                            await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
+                        except:
+                            pass
+                else:
+                    await bot.send_message(int(call.from_user.id), translater(int(call.from_user.id), 'По желанию, вы можете оставить отзыв'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(translater(int(call.from_user.id), 'Оставить отзыв'), callback_data=f'takeotziv_{order_id}')))
+                    db.order_end(int(order_id))
+            except:
+                pass
+        else:
+            if digitalList == None or digitalList == "None"or digitalList == "null":
+                for admin in admins:
+                    try:
+                        await bot.send_message(admin, translater(call.from_user.id, 'Новый заказ. Оплата с баланса. Посмотрите через админ-панель'))
+                    except:
+                        pass
+            else:
+                await bot.send_message(int(call.from_user.id), translater(int(call.from_user.id), 'По желанию, вы можете оставить отзыв'), reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(translater(int(call.from_user.id), 'Оставить отзыв'), callback_data=f'takeotziv_{order_id}')))
+                db.order_end(int(order_id))
 
         ref = db.get_referal(call.from_user.id)
-        refp = db.get_refproc_for_user(call.from_user.id)
+        refp = db.get_refproc_for_user(ref)
         if ref == 0:
             pass
         else:
@@ -782,7 +801,7 @@ async def payqiwicall(call: types.CallbackQuery, state: FSMContext):
                             except:
                                 pass
                     ref = db.get_referal(call.from_user.id)
-                    refp = db.get_refproc_for_user(call.from_user.id)
+                    refp = db.get_refproc_for_user(ref)
                     if ref == 0:
                         pass
                     else:
@@ -845,7 +864,7 @@ async def checkpayyoomcall(call: types.CallbackQuery):
                         except:
                             pass
                 ref = db.get_referal(call.from_user.id)
-                refp = db.get_refproc_for_user(call.from_user.id)
+                refp = db.get_refproc_for_user(ref)
                 if ref == 0:
                     pass
                 else:
@@ -920,7 +939,7 @@ async def checkpayqiwicall(call: types.CallbackQuery):
                         except:
                             pass
                 ref = db.get_referal(call.from_user.id)
-                refp = db.get_refproc_for_user(call.from_user.id)
+                refp = db.get_refproc_for_user(ref)
                 if ref == 0:
                     pass
                 else:

@@ -71,8 +71,16 @@ class Captcha:
         if callback_query.data.split("_")[-1] == "0":
             self.correct_choice = random.choice(list(self.choices.keys()))
             try:
+                engChoices = {
+                    "яблоко": "apple",
+                    "автомобиль": "car",
+                    "собаку": "dog",
+                    "дерево": "tree",
+                    "радугу": "rainbow",
+                    "банан": "banana",
+                }
                 await callback_query.message.edit_text(
-                    "Неверно. Попробуйте ещё раз\n" + self.get_caption(),
+                    "Неверно. Попробуйте ещё раз\n" + self.get_caption(engChoices),
                     reply_markup=self.get_captcha_keyboard(),
                 )
             except MessageNotModified:

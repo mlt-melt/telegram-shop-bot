@@ -6,7 +6,14 @@ from states import Withdraw, Deposit
 from payments import get_payment, getCoins, createPayment, create_pay
 from captcha import Captcha
 from functions import translater, anti_flood, torub, rubto
+import requests
 
+def get_courses():
+    a = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
+    usd = a.json()['Valute']['USD']['Value']
+    eur = a.json()['Valute']['EUR']['Value']
+    returns = [usd, eur]
+    return returns
 
 @dp.message_handler(text='Меню пользователя 👤')
 @dp.message_handler(text='User menu 👤')
@@ -22,14 +29,14 @@ async def usermenumsg(message: types.Message):
                 username = ''
             else:
                 username = translater(message.from_user.id, 'Логин: ') + f'@{username}\n'
-            balance = rubto(curr, user_info[1])
+            balance = round(rubto(curr, user_info[1]), 2)
             nickname = db.get_usernamerev(message.from_user.id)
             pay_count = user_info[2]
             if pay_count == None:
                 pay_count = 0
             userstatus = db.get_userstatus_new(int(user_id))
             db.remove_old_orders()
-            await message.answer(translater(message.from_user.id, 'Статус пользователя')+': '+translater(message.from_user.id, userstatus)+'\n-------------------\n'+translater(message.from_user.id ,'Ник: ')+nickname+'\n'+username+translater(message.from_user.id, 'Баланс: ')+str(balance)+' '+str(curr)+'\n'+translater(message.from_user.id, 'Персональная скидка: ')+str(db.get_procent(int(user_id)))+'%\n'+translater(message.from_user.id, f'Купон на скидку: ') + (db.get_promoadm(int(user_id))) +'\n-------------------\n'+translater(message.from_user.id, 'Личная статистика:')+'\n'+translater(message.from_user.id, 'Покупок: ')+str(pay_count)+'\n'+translater(message.from_user.id, 'На сумму: ')+str((rubto(curr, db.get_count_buyspr(int(user_id)))))+' '+str(curr)+'\n-------------------\n'+translater(message.from_user.id, 'Статистика реф.системы:')+'\n'+translater(message.from_user.id, 'Реф. приглашено: ')+str(db.get_count_refs(int(user_id)))+'\n'+translater(message.from_user.id, 'Реф. заработано: ')+str(db.get_refbalance(int(user_id))))
+            await message.answer(translater(message.from_user.id, 'Статус пользователя')+': '+translater(message.from_user.id, userstatus)+'\n-------------------\n'+translater(message.from_user.id ,'Ник: ')+nickname+'\n'+username+translater(message.from_user.id, 'Баланс: ')+str(balance)+' '+str(curr)+'\n'+translater(message.from_user.id, 'Персональная скидка: ')+str(db.get_procent(int(user_id)))+'%\n'+translater(message.from_user.id, f'Купон на скидку: ') + (db.get_promoadm(int(user_id))) +'\n-------------------\n'+translater(message.from_user.id, 'Личная статистика:')+'\n'+translater(message.from_user.id, 'Покупок: ')+str(pay_count)+'\n'+translater(message.from_user.id, 'На сумму: ')+str(round(rubto(curr, db.get_count_buyspr(int(user_id))), 2))+' '+str(curr)+'\n-------------------\n'+translater(message.from_user.id, 'Статистика реф.системы:')+'\n'+translater(message.from_user.id, 'Реф. приглашено: ')+str(db.get_count_refs(int(user_id)))+'\n'+translater(message.from_user.id, 'Реф. заработано: ')+str(round(db.get_refbalance(int(user_id)), 2)))
             await message.answer(translater(message.from_user.id, 'Вы вошли в меню пользователя'), reply_markup=usermenu_mkp(message.from_user.id))
         else:
             captcha = Captcha()
@@ -241,13 +248,20 @@ async def withdrawreqmsg(message: types.Message, state: FSMContext):
     btn1 = types.InlineKeyboardButton('Да', callback_data='go')
     btn2 = types.InlineKeyboardButton('Отменить', callback_data='cancel')
     mkp.add(btn1).add(btn2)
-    await message.answer(translater(message.from_user.id, 'Вы точно хотите подать заявку на вывод')+f' <code>{amount}</code> RUB\n'+translater(message.from_user.id, 'На реквизиты')+f': {req}', reply_markup=mkp)
+    currency = db.get_currencysetadm()[0]
+    await message.answer(translater(message.from_user.id, 'Вы точно хотите подать заявку на вывод')+f' <code>{amount}</code> {currency.upper()}\n'+translater(message.from_user.id, 'На реквизиты')+f': {req}', reply_markup=mkp)
 
 @dp.callback_query_handler(text='go', state=Withdraw.Req)
 async def gowithdrawreqcall(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         pass
     amount = data['Amount']
+    currency = db.get_currencysetadm()[0]
+    courses = get_courses()
+    if currency == "usd":
+        amount = float(amount)*float(courses[0])
+    elif currency == "eur":
+        amount = float(amount)*float(courses[1])
     req = data['Req']
     await call.message.delete()
     await call.message.answer(translater(call.from_user.id, 'Заявка на вывод успешно подана. Вы были возвращены в меню'), reply_markup=menu_mkp(call.from_user.id))

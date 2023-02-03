@@ -91,6 +91,7 @@ async def questaddquestquestidmsg(message: types.Message, state: FSMContext):
             except:
                 pass
         
+        supports = db.get_supports()
         for support in supports:
             try:
                 await bot.send_message(support, translater(support, f'Дополнение к вопросу') + f' №{questid}\n\n{message.text}')

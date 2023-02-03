@@ -436,8 +436,11 @@ class DB:
                 self.cursor.execute('SELECT digital FROM goods WHERE id=?', (goodid,))
                 result = self.cursor.fetchone()
                 try:
-                    result = json.loads(result[0])
-                    return True
+                    if result[0] == None or result[0] == "null":
+                        return False
+                    else:
+                        result = json.loads(result[0])
+                        return True
                 except:
                     return False
             except:
@@ -1764,10 +1767,18 @@ class DB:
                 lock.acquire(True)
                 self.cursor.execute('SELECT ref_balance FROM users WHERE user_id=?', (user_id,))
                 result = self.cursor.fetchone()
+                self.cursor.execute('SELECT currency FROM curryncyset WHERE status=?', (1,))
+                curr = self.cursor.fetchone()[0]
                 if result[0] == None:
                     return 0
                 else:
-                    return result[0]
+                    courses = get_courses()
+                    if curr == "usd":
+                        return (float(result[0])/float(courses[0]))
+                    elif curr == "eur":
+                        return (float(result[0])/float(courses[1]))
+                    else:
+                        return result[0]
             except:
                 self.connection.rollback()
             finally:
@@ -1908,7 +1919,16 @@ class DB:
                 lock.acquire(True)
                 self.cursor.execute('SELECT pay FROM reviewpay')
                 result = self.cursor.fetchone()
-                return result[0]
+                self.cursor.execute('SELECT currency FROM curryncyset WHERE status=?', (1,))
+                curr = self.cursor.fetchone()[0]
+                courses = get_courses()
+                if curr == "usd":
+                    return (float(result[0])/float(courses[0]))
+                elif curr == "eur":
+                    return (float(result[0])/float(courses[1]))
+                else:
+                    return result[0]
+
             except:
                 self.connection.rollback()
             finally:

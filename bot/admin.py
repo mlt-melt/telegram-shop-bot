@@ -3,7 +3,7 @@ from config import dp, admins, db, bot
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from markups import admin_mkp, cancel_mkp, all_users_mkp, menu_mkp, menu_mkp_admin, deliveriesadm_mkp, withdraws_mkp, botsettings_mkp, lan_settingmkp
-from functions import get_faq_admin, get_categories_admin, get_subcategories_admin, get_goods_admin, send_admin_good, translater
+from functions import get_faq_admin, get_categories_admin, get_subcategories_admin, get_goods_admin, send_admin_good, translater, rubto
 from states import AddSupport, ChangeRef2, NewFaq, FaqName, FaqText, AddCat, AddSubcat, ChangeNamecat, ChangeNamesubcat, AddGood, ChangeNameGood, ChangeDescGood, ChangePriceGood, ChangeRef, OrderEnd, Rassilka, DeliveryAdd, DeliveryChangeName, DeliveryChangeCost, ChangeBalance, GivePromo, GiveSkidka, SendMsg, ChangeStatus, ChangeRules, ChangeToken, ChangeReviewPay, ChageNicknameAdm, AddCatEng, AddCatRus, ChangeNamecatEng, ChangeNamecatRus, AddSubcatEng, AddSubcatRus, ChangeNamesubcatEng, ChangeNamesubcatRus, ChangeNameGoodEng, ChangeNameGoodRus, ChangeDescGoodEng, ChangeDescGoodRus, RassilkaAll
 import pickle
 import requests
@@ -748,7 +748,7 @@ async def addDigitalGood(message: types.Message, state: FSMContext):
         price = float(message.text)
         async with state.proxy() as data:
             data['Price'] = price
-        await message.answer(translater(message.from_user.id, 'Цена была установлена' + f' - {price}'))
+        await message.answer(translater(message.from_user.id, 'Цена была установлена') + f' - {price}')
         mkp = types.InlineKeyboardMarkup()
         btn1 = types.InlineKeyboardButton(translater(message.from_user.id, 'Создать как физический товар'), callback_data='physical')
         mkp.add(btn1)
@@ -821,19 +821,19 @@ async def confirmAdding(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
         else:
             photo = data['Photo']
-            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+            await call.message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
     elif name !=  'None':
         if data['Photo'] == 'None':
-            await call.call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+            await call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
         else:
             photo = data['Photo']
-            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+            await call.message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
     elif name == 'None':
         if data['Photo'] == 'None':
-            await call.call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+            await call.answer((translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
         else:
             photo = data['Photo']
-            await call.call.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
+            await call.message.answer_photo(open(f'images/{photo}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{name}</code>\n' + translater(call.from_user.id, 'Описание:') + f' <code>{description}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{price}</code>'), reply_markup=mkp)
 
 
 @dp.callback_query_handler(text='add', state=AddGood.DigitalGood)
@@ -874,6 +874,14 @@ async def admingoodcall(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     goodid = call.data.split('_')[1]
     good_info = db.get_goodinfo(int(goodid))
+    currency = db.get_currencysetadm()[0]
+    courses = get_courses()
+    if currency == "usd":
+        price = float(good_info[2])/float(courses[0])
+    elif currency == "eur":
+        price = float(good_info[2])/float(courses[1])
+    else:
+        price = float(good_info[2])
     mkp = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(translater(call.from_user.id, 'Название'), callback_data=f'changegoodname_{goodid}')
     btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Описание'), callback_data=f'changegooddesc_{goodid}')
@@ -882,9 +890,9 @@ async def admingoodcall(call: types.CallbackQuery, state: FSMContext):
     btn5 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отменить'), callback_data='admin')
     mkp.add(btn1).add(btn2, btn3).add(btn4).add(btn5)
     if good_info[3] == 'None':
-        await call.message.answer(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить'), reply_markup=mkp)
+        await call.message.answer(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{round(price, 2)}</code> {currency}\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить'), reply_markup=mkp)
     else:
-        await call.message.answer_photo(open(f'images/{good_info[3]}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{good_info[2]}</code>\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить')), reply_markup=mkp)
+        await call.message.answer_photo(open(f'images/{good_info[3]}', 'rb'), caption=(translater(call.from_user.id, 'Название товара:') + f' <code>{good_info[0]}</code>\n' + translater(call.from_user.id, 'Описание товара:') + f' <code>{good_info[1]}</code>\n' + translater(call.from_user.id, 'Цена:') + f' <code>{round(price, 2)}</code> {currency}\n\n' + translater(call.from_user.id, 'Выберите, что вы хотите изменить')), reply_markup=mkp)
     try:
         await state.finish()
     except:
@@ -1481,7 +1489,7 @@ async def chjangestatususeridmsg(message: types.Message, state: FSMContext):
     btn11 = types.InlineKeyboardButton(translater(message.from_user.id, 'Изменить персональный РЕФ%'), callback_data=f'changepersref_{user_id}')
     btn10 = types.InlineKeyboardButton(translater(message.from_user.id, 'Назад'), callback_data=f'usersback_{page}')
     mkp.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9).add(btn11).add(btn10)
-    await message.message.answer(translater(message.from_user.id, 'Статус пользователя:') + f' {userstatus}\n-------------------\n' + translater(message.from_user.id, 'Ник:') + f' {nickame}\n' + translater(message.from_user.id, 'Логин:') + f' @{username}\n' + translater(message.from_user.id, 'Баланс:') + f' {round(float(balance), 2)}\n' + translater(message.from_user.id, 'Персональная скидка:') + f' {db.get_procent(int(user_id))}%\n' + translater(message.from_user.id, 'Персональный РЕФ:') + f' {db.get_refproc_for_user(int(user_id))}%\n' + translater(message.from_user.id, 'Купон на скидку:') + f' {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else translater(message.from_user.id, "Отсутствует")}\n-------------------\n' + translater(message.from_user.id, 'Личная статистика:\nПокупок:') + f' {pay_count}\n' + translater(message.from_user.id, 'На сумму:') + f' {round(float(db.get_count_buyspr(int(user_id))), 2)}\n' + translater(message.from_user.id, 'Статистика реф.системы:\nРеф. приглашено:') + f' {db.get_count_refs(int(user_id))}\n' + translater(message.from_user.id, 'Реф. заработано:') + f' {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
+    await message.answer(translater(message.from_user.id, 'Статус пользователя:') + f' {userstatus}\n-------------------\n' + translater(message.from_user.id, 'Ник:') + f' {nickame}\n' + translater(message.from_user.id, 'Логин:') + f' @{username}\n' + translater(message.from_user.id, 'Баланс:') + f' {round(float(balance), 2)}\n' + translater(message.from_user.id, 'Персональная скидка:') + f' {db.get_procent(int(user_id))}%\n' + translater(message.from_user.id, 'Персональный РЕФ:') + f' {db.get_refproc_for_user(int(user_id))}%\n' + translater(message.from_user.id, 'Купон на скидку:') + f' {db.get_promoadm(int(user_id)) if db.get_promoadm(int(user_id)) != None else translater(message.from_user.id, "Отсутствует")}\n-------------------\n' + translater(message.from_user.id, 'Личная статистика:\nПокупок:') + f' {pay_count}\n' + translater(message.from_user.id, 'На сумму:') + f' {round(float(db.get_count_buyspr(int(user_id))), 2)}\n' + translater(message.from_user.id, 'Статистика реф.системы:\nРеф. приглашено:') + f' {db.get_count_refs(int(user_id))}\n' + translater(message.from_user.id, 'Реф. заработано:') + f' {round(float(db.get_user_refbalance(int(user_id), currency)), 2)}', reply_markup=mkp)
     
 @dp.callback_query_handler(text_contains='changestatuss_')
 async def changestatusscall(call: types.CallbackQuery):
@@ -2095,7 +2103,9 @@ async def withdrcall(call: types.CallbackQuery):
     btn2 = types.InlineKeyboardButton(translater(call.from_user.id, 'Отказано'), callback_data=f'withno_{with_id}')
     btn3 = types.InlineKeyboardButton(translater(call.from_user.id, 'Админ-панель'), callback_data='admin')
     mkp.add(btn1).add(btn2).add(btn3)
-    await call.message.answer(translater(call.from_user.id, 'ID пользователя:') + f' {with_info[0]}\n' + translater(call.from_user.id, 'Сумма:') + f' {with_info[1]}\n' + translater(call.from_user.id, 'Реквизиты:') + f' {with_info[2]}', reply_markup=mkp)
+    price_eur = float(rubto("eur", float(with_info[1])))
+    price_usd = float(rubto("usd", float(with_info[1])))
+    await call.message.answer(translater(call.from_user.id, 'ID пользователя:') + f' {with_info[0]}\n' + translater(call.from_user.id, 'Сумма:') + f'\n     1) Rub - {round(float(with_info[1]), 2)}\n     2) Usd - {round(price_usd, 2)}\n     3) Eur - {round(price_eur, 2)}\n' + translater(call.from_user.id, 'Реквизиты:') + f' {with_info[2]}', reply_markup=mkp)
 
 
 @dp.callback_query_handler(text_contains='withok_')
@@ -2191,7 +2201,8 @@ async def changetokengocall(call: types.CallbackQuery, state: FSMContext):
 @dp.message_handler(text='Review fee')
 async def platazaotzivpy(message: types.Message):
     reviewpay = db.get_reviewpay()
-    await message.answer(translater(message.from_user.id, 'Сейчас мы платим') + f' {reviewpay} ' + translater(message.from_user.id, 'руб за отзыв. Введите новое число или нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
+    curr = db.get_currencysetadm()[0]
+    await message.answer(translater(message.from_user.id, 'Сейчас мы платим') + f' {round(float(reviewpay), 2)} {curr} ' + translater(message.from_user.id, 'за отзыв. Введите новое число или нажмите "Отменить"'), reply_markup=cancel_mkp(message.from_user.id))
     await ChangeReviewPay.Pay.set()
 
 @dp.callback_query_handler(text='cancel', state=ChangeReviewPay.Pay)
@@ -2205,7 +2216,14 @@ async def changereviewpaypaymsg(message: types.Message, state: FSMContext):
     if message.text.isdigit():
         async with state.proxy() as data:
             data['Pay'] = message.text
-        db.change_reviewpay(message.text)
+        curr = db.get_currencysetadm()[0]
+        courses = get_courses()
+        if curr == "usd":
+            db.change_reviewpay(str(float(message.text)*float(courses[0])))
+        elif curr == "eur":
+            db.change_reviewpay(str(float(message.text)*float(courses[1])))
+        else:
+            db.change_reviewpay(message.text)
         await message.answer(translater(message.from_user.id, 'Успешно изменено! Вы были возвращены в админ-панель'), reply_markup=admin_mkp(message.from_user.id))
         await state.finish()
     else:

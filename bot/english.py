@@ -119,7 +119,7 @@ english = [
     'OK, enter the promo code or click "Skip"',
     'The minimum deposit amount is 4 usd/eur. Try again',
     'Nickname: ',
-    'Login: @',
+    'Login: ',
     'Balance: ',
     'Personal discount:',
     'Personal discount: ',
@@ -374,7 +374,7 @@ english = [
     'The token has been changed! Restart the bot to apply the changes',
     'Enter a new bot token. ATTENTION, if you enter an incorrect token, the bot will stop working',
     'Now we pays',
-    'rub per review. Enter a new number or click "Cancel"',
+    'per review. Enter a new number or click "Cancel"',
     'Do you really want to change the bot token to',
     'The rules have been successfully updated! You have been returned to the admin panel',
     'Current rules:',
@@ -428,7 +428,7 @@ english = [
     'The price has been set',
     'Physical product',
     'Create as a physical product',
-    'You can create this product as a digital one. In this case, immediately after the purchase, the user will receive it along with your instructions. Click "Physical product" to skip this step or send the product and instructions to it (Write in text, you can attach <b>one</b> photo or video. If the product is a file or you need to attach more than one photo - use file sharing services and attach a link)',
+    'You can create this product as a digital one. In this case, immediately after the purchase, the user will receive it along with your instructions. Click "Create as a physical product" to skip this step or send the product and instructions to it (Write in text, you can attach <b>one</b> photo or video. If the product is a file or you need to attach more than one photo, use file sharing services and attach a link)',
     'This is digital good, it will be sent to you immediately after purchase'
 ]
 
